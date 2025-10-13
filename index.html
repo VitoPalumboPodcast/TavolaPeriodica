@@ -458,7 +458,10 @@ function render(){
       btn.dataset.period=el.period||'';
       btn.dataset.block=el.block||'';
       btn.dataset.category=el.category||'';
-      btn.title=`${el.name} (${el.sym}) – Z ${el.Z}`;
+      const pos=positionFor(el)||{col:'—',row:'—'};
+      const posDesc=`Posizione: gruppo ${V(el.group)}, periodo ${V(el.period)} (col ${pos.col}, riga ${pos.row})`;
+      btn.title=`${el.name} (${el.sym}) – Z ${el.Z} • ${posDesc}`;
+      btn.setAttribute('aria-label',`${el.name} (${el.sym}). Z ${el.Z}. ${posDesc}`);
       btn.innerHTML=`<span class="nuclideA">${mass}</span><span class="nuclideZ">${el.Z}</span><span class="sym">${el.sym}</span><span class="name">${el.name}</span>`;
       btn.addEventListener('click',()=>openDetail(el, btn));
       grid.appendChild(btn);
