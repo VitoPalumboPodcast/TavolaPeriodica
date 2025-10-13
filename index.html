@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Tavola Periodica – Sintesi Interattiva</title>
+<style>
+:root{
+  --bg:#f7f9fc; --ink:#102a43; --muted:#627d98; --card:#ffffff; --accent:#2b8a3e; --accent-2:#1f6feb;
+  --border:#d9e2ec; --metallo:#e8f5e9; --nonmetallo:#e3f2fd; --semimetallo:#fff3e0; --alogeno:#f3e8ff; --nobile:#fce8ec;
+  --alcalino:#fffde7; --alcalino-terroso:#f1f8e9; --transizione:#e0f7fa; --lantanide:#ede7f6; --attinide:#fbe9e7; --post:#f0f4f8;
+  --highlight:#ffec99; --chonps:#ffe8a1; --shadow:0 8px 24px rgba(0,0,0,.08);
+  --alpha-alcalino:1; --alpha-alcalino-terroso:1; --alpha-transizione:1; --alpha-post:1;
+  --alpha-semimetallo:1; --alpha-nonmetallo:1; --alpha-alogeno:1; --alpha-nobile:1; --alpha-lantanide:1; --alpha-attinide:1;
+  --hero-gradient:linear-gradient(120deg,rgba(43,138,62,.12),rgba(31,111,235,.1));
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;color:var(--ink);background:var(--bg)}
+header{position:sticky;top:0;z-index:10;background:linear-gradient(180deg,#fff,rgba(255,255,255,.85));backdrop-filter:saturate(1.1) blur(6px);box-shadow:0 2px 12px rgba(0,0,0,.06)}
+.container{max-width:1280px;margin:0 auto;padding:1rem}
+.hero{display:flex;gap:1.5rem;align-items:center;justify-content:space-between;background:var(--hero-gradient);border:1px solid rgba(16,42,67,.08);border-radius:18px;padding:1.4rem 1.6rem;margin-top:.75rem}
+.hero h1{margin:0;font-size:2rem}
+.hero p{margin:.35rem 0 1rem 0;color:var(--muted);max-width:680px}
+.variants{display:flex;flex-wrap:wrap;gap:.6rem}
+.variants a{display:inline-flex;align-items:center;gap:.45rem;padding:.45rem .75rem;border-radius:999px;background:#fff;border:1px solid rgba(16,42,67,.12);color:var(--accent-2);font-size:.9rem;text-decoration:none;transition:transform .1s ease, box-shadow .2s ease}
+.variants a:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(31,111,235,.15)}
+.toolbar{display:flex;flex-wrap:wrap;gap:.75rem;align-items:center;justify-content:space-between}
+.controls{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center}
+.controls input[type="search"]{padding:.65rem .8rem;border:1px solid var(--border);border-radius:10px;background:#fff;min-width:260px}
+.btn{padding:.6rem .9rem;border:1px solid var(--border);border-radius:10px;background:#fff;color:var(--ink);cursor:pointer;transition:transform .05s ease, box-shadow .2s ease, background .2s ease}
+.btn:hover{box-shadow:var(--shadow)}
+.btn[aria-pressed="true"]{background:var(--accent);border-color:transparent;color:#fff}
+select, .filters fieldset{padding:.45rem .6rem;border:1px solid var(--border);border-radius:10px;background:#fff}
+.filters{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center}
+.alphaControls{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.65rem;margin-top:1rem}
+.alphaControls label{display:flex;flex-direction:column;gap:.4rem;padding:.75rem;border:1px solid var(--border);border-radius:14px;background:#fff;box-shadow:0 4px 12px rgba(16,42,67,.05)}
+.alphaControls label span{display:flex;justify-content:space-between;align-items:center;font-size:.85rem;color:var(--muted)}
+.alphaControls input[type="range"]{accent-color:var(--accent);width:100%}
+.alphaControls .value{font-variant-numeric:tabular-nums;color:var(--ink);font-weight:600}
+.alphaActions{display:flex;justify-content:flex-end;margin-top:.5rem}
+.legend{display:flex;flex-wrap:wrap;gap:.4rem .6rem}
+.legend .chip{display:inline-flex;align-items:center;gap:.4rem;font-size:.8rem;padding:.2rem .5rem;border-radius:999px;border:1px solid var(--border);background:#fff}
+.legend .sw{width:14px;height:14px;border-radius:4px;border:1px solid var(--border)}
+main{padding:1rem}
+.board{max-width:1280px;margin:0 auto;background:var(--card);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow);padding:1rem}
+.grid{display:grid;grid-template-columns: repeat(18, minmax(42px, 1fr));grid-auto-rows:60px;gap:.35rem}
+.cell{position:relative;border:1px solid var(--border);border-radius:10px;padding:.25rem .3rem;overflow:hidden;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;background:#fff;cursor:pointer;transition:transform .06s ease, box-shadow .2s ease, background .2s ease, filter .2s ease, opacity .2s ease}
+.cell:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
+.cell .sym{font-weight:700;font-size:1.1rem;line-height:1}
+.cell .z{position:absolute;top:.25rem;left:.35rem;font-size:.75rem;color:var(--muted)}
+.cell .name{position:absolute;bottom:.3rem;left:.35rem;font-size:.7rem;color:var(--muted)}
+.cell.chonps{outline:2px dashed #c97c00;background:var(--chonps)}
+.cell.highlight{animation:pulse .9s ease-in-out 1}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(255,183,3,.6)}100%{box-shadow:0 0 0 18px rgba(255,183,3,0)}}
+.metallo{background:var(--metallo)} .nonmetallo{background:var(--nonmetallo)} .semimetallo{background:var(--semimetallo)}
+.alogeno{background:var(--alogeno)} .nobile{background:var(--nobile)} .alcalino{background:var(--alcalino)} .alcalino-terroso{background:var(--alcalino-terroso)}
+.transizione{background:var(--transizione)} .lantanide{background:var(--lantanide)} .attinide{background:var(--attinide)} .post{background:var(--post)}
+.cell.alcalino{opacity:var(--alpha-alcalino)}
+.cell.alcalino-terroso{opacity:var(--alpha-alcalino-terroso)}
+.cell.transizione{opacity:var(--alpha-transizione)}
+.cell.post{opacity:var(--alpha-post)}
+.cell.semimetallo{opacity:var(--alpha-semimetallo)}
+.cell.nonmetallo{opacity:var(--alpha-nonmetallo)}
+.cell.alogeno{opacity:var(--alpha-alogeno)}
+.cell.nobile{opacity:var(--alpha-nobile)}
+.cell.lantanide{opacity:var(--alpha-lantanide)}
+.cell.attinide{opacity:var(--alpha-attinide)}
+.smallnote{font-size:.85rem;color:var(--muted);margin:.25rem 0}
+/* Modal */
+dialog#detail{border:none;border-radius:16px;max-width:900px;width:96vw;padding:0;box-shadow:0 24px 64px rgba(2,12,27,.25)}
+.modal{display:grid;grid-template-columns: minmax(0,1.15fr) minmax(0,0.85fr);gap:1rem;padding:1rem 1rem 1.25rem;background:#fff;border-radius:16px;align-items:start}
+.modal header{grid-column:1/-1;background:transparent;box-shadow:none;position:static}
+.modal .headline{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:.75rem}
+.modal h2{margin:.25rem 0 0;font-size:1.35rem}
+.meta{display:flex;gap:.5rem;flex-wrap:wrap;color:var(--muted);font-size:.9rem}
+.atomWrap{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1fr);gap:1rem}
+.atomBox{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,220px);gap:1rem;align-items:center}
+.atomViz{background:#0b1020;color:#fff;border-radius:14px;padding:.8rem;border:1px solid #0b1b3a}
+.atomLegend{display:flex;flex-direction:column;gap:.4rem;font-size:.9rem;color:#1f2937}
+.atomLegend .row{display:flex;align-items:center;gap:.45rem}
+.atomLegend .dot{width:12px;height:12px;border-radius:50%}
+.dot.p{background:#ef4444}.dot.n{background:#6b7280}.dot.e{background:#60a5fa}
+.atomLegend small{color:#64748b}
+.atomActions-inline{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.6rem}
+.orbit{transform-origin:50% 50%}
+@keyframes spinCW{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+@keyframes spinCCW{from{transform:rotate(360deg)}to{transform:rotate(0deg)}}
+.spin1{animation:spinCW 6s linear infinite}
+.spin2{animation:spinCCW 8s linear infinite}
+.spin3{animation:spinCW 10s linear infinite}
+.spin4{animation:spinCCW 12s linear infinite}
+.spin5{animation:spinCW 14s linear infinite}
+.spin6{animation:spinCCW 16s linear infinite}
+.spin7{animation:spinCW 18s linear infinite}
+.kv{grid-column:1/-1;display:grid;grid-template-columns: 1fr 1fr;gap:.6rem}
+.kv .row{display:grid;grid-template-columns: 1fr 1fr;gap:.4rem;padding:.35rem;border:1px solid var(--border);border-radius:10px;background:#fcfdff}
+.kv .key{color:var(--muted);font-size:.85rem}
+.kv .val{font-weight:600}
+aside.note{grid-column:1/-1;border:1px dashed var(--border);background:#fff;padding:.75rem;border-radius:12px;color:#5c6b7a}
+.modal .close{margin-left:auto;border:none;background:#efefef;border-radius:999px;padding:.45rem .65rem;cursor:pointer}
+footer.modalbar{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:.9rem}
+@media (max-width:700px){.modal{grid-template-columns:1fr}.kv{grid-template-columns:1fr}}
+.summary{max-width:1280px;margin:2rem auto 0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem}
+.summary article{background:#fff;border:1px solid var(--border);border-radius:16px;padding:1rem 1.1rem;box-shadow:0 10px 32px rgba(16,42,67,.08)}
+.summary h2{margin:0 0 .35rem 0;font-size:1.05rem}
+.summary p{margin:.25rem 0 .5rem 0;color:var(--muted);font-size:.9rem}
+.summary a{color:var(--accent-2);font-weight:600;text-decoration:none}
+.summary a:hover{text-decoration:underline}
+.fetchStatus{display:flex;gap:.5rem;align-items:center}
+.fetchStatus span{min-height:1.2em}
+</style>
+</head>
+<body id="top">
+<header>
+  <div class="container">
+    <div class="hero">
+      <div>
+        <h1>Tavola Periodica interattiva</h1>
+        <p>Una sola pagina che sintetizza filtri avanzati, integrazione dei dati online, finestre di dettaglio con tutte le proprietà e l’animazione del modello atomico.</p>
+        <nav class="variants" aria-label="Altre versioni specializzate">
+          <a href="tavola_periodica_interattiva_118_dati_online.html">🔗 Dati online completi</a>
+          <a href="tavola_periodica_animazione_atomo_full_fix_chonps.html">🔗 Modale con animazione</a>
+          <a href="tavola_periodica_import_export.html">🔗 Import / Export</a>
+        </nav>
+      </div>
+    </div>
+  </div>
+  <div class="container">
+    <div class="toolbar">
+      <div class="controls">
+        <input id="search" type="search" placeholder="Cerca simbolo, nome o Z…" aria-label="Cerca elemento"/>
+        <button class="btn" id="btnChonps" aria-pressed="false" title="Evidenzia CHONPS (C, H, O, N, P, S)">Evidenzia CHONPS</button>
+        <button class="btn" id="btnAnim" title="Anima tutti">Anima tutti</button>
+        <button class="btn" id="btnReset" title="Pulisci filtri">Reset</button>
+      </div>
+      <div class="filters">
+        <label>Periodo
+          <select id="fPeriod">
+            <option value="">tutti</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option>
+          </select>
+        </label>
+        <label>Blocco
+          <select id="fBlock">
+            <option value="">tutti</option><option value="s">s</option><option value="p">p</option><option value="d">d</option><option value="f">f</option>
+          </select>
+        </label>
+        <label>Gruppo
+          <select id="fGroup">
+            <option value="">tutti</option>
+            <option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option><option>11</option><option>12</option><option>13</option><option>14</option><option>15</option><option>16</option><option>17</option><option>18</option>
+          </select>
+        </label>
+        <fieldset style="display:flex;gap:.4rem;align-items:center">
+          <legend style="font-size:.85rem;color:var(--muted)">Categoria</legend>
+          <label><input type="checkbox" class="fCat" value="alcalino" checked/> Alcalini</label>
+          <label><input type="checkbox" class="fCat" value="alcalino-terroso" checked/> Alcalino-terrosi</label>
+          <label><input type="checkbox" class="fCat" value="transizione" checked/> Transizione</label>
+          <label><input type="checkbox" class="fCat" value="post" checked/> Post-transizione</label>
+          <label><input type="checkbox" class="fCat" value="semimetallo" checked/> Semimetalli</label>
+          <label><input type="checkbox" class="fCat" value="nonmetallo" checked/> Non-metalli</label>
+          <label><input type="checkbox" class="fCat" value="alogeno" checked/> Alogeni</label>
+          <label><input type="checkbox" class="fCat" value="nobile" checked/> Nobili</label>
+          <label><input type="checkbox" class="fCat" value="lantanide" checked/> Lantanidi</label>
+          <label><input type="checkbox" class="fCat" value="attinide" checked/> Attinidi</label>
+        </fieldset>
+      </div>
+    </div>
+    <div class="alphaControls" aria-label="Regola l'opacità dei gruppi">
+      <label><span><strong>Alcalini</strong><span class="value" id="alphaLabel-alcalino">100%</span></span><input type="range" min="10" max="100" value="100" step="5" data-cat="alcalino"/></label>
+      <label><span><strong>Alcalino-terrosi</strong><span class="value" id="alphaLabel-alcalino-terroso">100%</span></span><input type="range" min="10" max="100" value="100" step="5" data-cat="alcalino-terroso"/></label>
+      <label><span><strong>Transizione</strong><span class="value" id="alphaLabel-transizione">100%</span></span><input type="range" min="10" max="100" value="100" step="5" data-cat="transizione"/></label>
+      <label><span><strong>Post-transizione</strong><span class="value" id="alphaLabel-post">100%</span></span><input type="range" min="10" max="100" value="100" step="5" data-cat="post"/></label>
+      <label><span><strong>Semimetalli</strong><span class="value" id="alphaLabel-semimetallo">100%</span></span><input type="range" min="10" max="100" value="100" step="5" data-cat="semimetallo"/></label>
+      <label><span><strong>Non-metalli</strong><span class="value" id="alphaLabel-nonmetallo">100%</span></span><input type="range" min="10" max="100" value="100" step="5" data-cat="nonmetallo"/></label>
+      <label><span><strong>Alogeni</strong><span class="value" id="alphaLabel-alogeno">100%</span></span><input type="range" min="10" max="100" value="100" step="5" data-cat="alogeno"/></label>
+      <label><span><strong>Gas nobili</strong><span class="value" id="alphaLabel-nobile">100%</span></span><input type="range" min="10" max="100" value="100" step="5" data-cat="nobile"/></label>
+      <label><span><strong>Lantanidi</strong><span class="value" id="alphaLabel-lantanide">100%</span></span><input type="range" min="10" max="100" value="100" step="5" data-cat="lantanide"/></label>
+      <label><span><strong>Attinidi</strong><span class="value" id="alphaLabel-attinide">100%</span></span><input type="range" min="10" max="100" value="100" step="5" data-cat="attinide"/></label>
+    </div>
+    <div class="alphaActions">
+      <button class="btn" id="btnAlphaReset">Reimposta opacità</button>
+    </div>
+  </div>
+  <div class="container">
+    <div class="legend">
+        <span class="chip"><span class="sw" style="background:var(--alcalino)"></span> Alcalini</span>
+        <span class="chip"><span class="sw" style="background:var(--alcalino-terroso)"></span> Alcalino-terrosi</span>
+        <span class="chip"><span class="sw" style="background:var(--transizione)"></span> Transizione</span>
+        <span class="chip"><span class="sw" style="background:var(--post)"></span> Post-transizione</span>
+        <span class="chip"><span class="sw" style="background:var(--semimetallo)"></span> Semimetalli</span>
+        <span class="chip"><span class="sw" style="background:var(--nonmetallo)"></span> Non-metalli</span>
+        <span class="chip"><span class="sw" style="background:var(--alogeno)"></span> Alogeni</span>
+        <span class="chip"><span class="sw" style="background:var(--nobile)"></span> Gas nobili</span>
+        <span class="chip"><span class="sw" style="background:var(--lantanide)"></span> Lantanidi</span>
+        <span class="chip"><span class="sw" style="background:var(--attinide)"></span> Attinidi</span>
+        <span class="chip"><span class="sw" style="background:var(--chonps)"></span> CHONPS</span>
+      </div>
+      <p class="smallnote">I dati vengono integrati automaticamente dal dataset pubblico (Kelvin per T). In caso di blocco CORS, usa il pulsante "Aggiorna dati".</p>
+      <div class="controls fetchStatus" style="margin-top:.5rem">
+        <button class="btn" id="btnFetch">Aggiorna dati</button>
+        <span id="fetchStatus" class="smallnote" aria-live="polite"></span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section class="board">
+    <div class="grid" id="grid"></div>
+    <p class="smallnote">Lantanidi (57–71) e Attinidi (89–103) sono disposti su righe dedicate.</p>
+  </section>
+</main>
+
+<dialog id="detail">
+  <div class="modal">
+    <header>
+      <div class="headline">
+        <h2 id="d-title">Elemento</h2>
+        <button class="close" id="d-close" aria-label="Chiudi">Chiudi ✕</button>
+      </div>
+      <div class="meta" id="d-meta"></div>
+    </header>
+    <div class="atomWrap">
+      <div class="atomBox">
+        <div class="atomViz">
+          <svg id="atomSVG" width="100%" viewBox="0 0 400 400" role="img" aria-label="Animazione della struttura atomica">
+            <defs>
+              <filter id="softGlow" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur in="SourceGraphic" stdDeviation="2" result="blur"/>
+                <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+              </filter>
+            </defs>
+            <g id="atomNucleus"></g>
+            <g id="atomShells"></g>
+          </svg>
+        </div>
+        <div class="atomLegend">
+          <div class="row"><span class="dot p"></span> Protoni (Z): <strong id="pCount">—</strong></div>
+          <div class="row"><span class="dot n"></span> Neutroni (N): <strong id="nCount">—</strong> <small>(N ≈ A − Z)</small></div>
+          <div class="row"><span class="dot e"></span> Elettroni: <strong id="eCount">—</strong></div>
+          <small>Il modello mostra gusci elettronici di tipo Bohr con rotazioni alternate per evidenziare il moto.</small>
+          <div class="atomActions-inline">
+            <button class="btn" id="d-focus">Centra elemento</button>
+            <button class="btn" id="d-toggle-chonps">Attiva CHONPS</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="kv" id="d-kv"></div>
+    <aside class="note" id="d-note">Nota: i dati mancanti sono indicati con “—”. Temperature in Kelvin (K) ove non diversamente specificato.</aside>
+    <footer class="modalbar">
+      <span id="d-pos"></span><span id="d-aux"></span>
+    </footer>
+  </div>
+</dialog>
+
+<section class="summary" aria-labelledby="summaryTitle">
+  <article>
+    <h2 id="summaryTitle">Panoramica dei prototipi</h2>
+    <p>Questa versione riassume le idee chiave: ricerca, filtri didattici, animazioni atomiche e controllo dell’opacità dei gruppi.</p>
+    <a href="#top">Torna ai controlli</a>
+  </article>
+  <article>
+    <h2>Dataset aggiornabili</h2>
+    <p><strong>tavola_periodica_interattiva_118_dati_online.html</strong> si concentra sull’integrazione dinamica con il dataset pubblico per aggiornare masse, configurazioni e temperature.</p>
+    <a href="tavola_periodica_interattiva_118_dati_online.html">Apri versione dedicata</a>
+  </article>
+  <article>
+    <h2>Animazione atomica</h2>
+    <p><strong>tavola_periodica_animazione_atomo_full_fix_chonps.html</strong> espone in dettaglio la modale con gusci elettronici animati e note didattiche complete.</p>
+    <a href="tavola_periodica_animazione_atomo_full_fix_chonps.html">Apri versione dedicata</a>
+  </article>
+  <article>
+    <h2>Import / Export</h2>
+    <p><strong>tavola_periodica_import_export.html</strong> aggiunge strumenti per salvare la tavola offline o importare dati personalizzati in formato JSON/HTML.</p>
+    <a href="tavola_periodica_import_export.html">Apri versione dedicata</a>
+  </article>
+</section>
+
+<script>
+/* ===== Core dataset 118 (structure only; props filled via web dataset) ===== */
+const E=(Z,sym,name,period,group,block,category,chonps=false)=>({Z,sym,name,period,group,block,category,chonps,props:{}});
+const ELEMENTS=[
+  // p1
+  E(1,'H','Idrogeno',1,1,'s','nonmetallo',true), E(2,'He','Elio',1,18,'s','nobile'),
+  // p2
+  E(3,'Li','Litio',2,1,'s','alcalino'), E(4,'Be','Berillio',2,2,'s','alcalino-terroso'),
+  E(5,'B','Boro',2,13,'p','semimetallo'), E(6,'C','Carbonio',2,14,'p','nonmetallo',true),
+  E(7,'N','Azoto',2,15,'p','nonmetallo',true), E(8,'O','Ossigeno',2,16,'p','nonmetallo',true),
+  E(9,'F','Fluoro',2,17,'p','alogeno'), E(10,'Ne','Neon',2,18,'p','nobile'),
+  // p3
+  E(11,'Na','Sodio',3,1,'s','alcalino'), E(12,'Mg','Magnesio',3,2,'s','alcalino-terroso'),
+  E(13,'Al','Alluminio',3,13,'p','post'), E(14,'Si','Silicio',3,14,'p','semimetallo'),
+  E(15,'P','Fosforo',3,15,'p','nonmetallo',true), E(16,'S','Zolfo',3,16,'p','nonmetallo',true),
+  E(17,'Cl','Cloro',3,17,'p','alogeno'), E(18,'Ar','Argon',3,18,'p','nobile'),
+  // p4
+  E(19,'K','Potassio',4,1,'s','alcalino'), E(20,'Ca','Calcio',4,2,'s','alcalino-terroso'),
+  E(21,'Sc','Scandio',4,3,'d','transizione'), E(22,'Ti','Titanio',4,4,'d','transizione'),
+  E(23,'V','Vanadio',4,5,'d','transizione'), E(24,'Cr','Cromo',4,6,'d','transizione'),
+  E(25,'Mn','Manganese',4,7,'d','transizione'), E(26,'Fe','Ferro',4,8,'d','transizione'),
+  E(27,'Co','Cobalto',4,9,'d','transizione'), E(28,'Ni','Nichel',4,10,'d','transizione'),
+  E(29,'Cu','Rame',4,11,'d','transizione'), E(30,'Zn','Zinco',4,12,'d','transizione'),
+  E(31,'Ga','Gallio',4,13,'p','post'), E(32,'Ge','Germanio',4,14,'p','semimetallo'),
+  E(33,'As','Arsenico',4,15,'p','semimetallo'), E(34,'Se','Selenio',4,16,'p','nonmetallo'),
+  E(35,'Br','Bromo',4,17,'p','alogeno'), E(36,'Kr','Kripton',4,18,'p','nobile'),
+  // p5
+  E(37,'Rb','Rubidio',5,1,'s','alcalino'), E(38,'Sr','Stronzio',5,2,'s','alcalino-terroso'),
+  E(39,'Y','Ittrio',5,3,'d','transizione'), E(40,'Zr','Zirconio',5,4,'d','transizione'),
+  E(41,'Nb','Niobio',5,5,'d','transizione'), E(42,'Mo','Molibdeno',5,6,'d','transizione'),
+  E(43,'Tc','Tecnezio',5,7,'d','transizione'), E(44,'Ru','Rutenio',5,8,'d','transizione'),
+  E(45,'Rh','Rodio',5,9,'d','transizione'), E(46,'Pd','Palladio',5,10,'d','transizione'),
+  E(47,'Ag','Argento',5,11,'d','transizione'), E(48,'Cd','Cadmio',5,12,'d','transizione'),
+  E(49,'In','Indio',5,13,'p','post'), E(50,'Sn','Stagno',5,14,'p','post'),
+  E(51,'Sb','Antimonio',5,15,'p','semimetallo'), E(52,'Te','Tellurio',5,16,'p','semimetallo'),
+  E(53,'I','Iodio',5,17,'p','alogeno'), E(54,'Xe','Xenon',5,18,'p','nobile'),
+  // p6
+  E(55,'Cs','Cesio',6,1,'s','alcalino'), E(56,'Ba','Bario',6,2,'s','alcalino-terroso'),
+  E(57,'La','Lantanio',6,3,'f','lantanide'), E(58,'Ce','Cerio',6,3,'f','lantanide'),
+  E(59,'Pr','Praseodimio',6,3,'f','lantanide'), E(60,'Nd','Neodimio',6,3,'f','lantanide'),
+  E(61,'Pm','Promezio',6,3,'f','lantanide'), E(62,'Sm','Samario',6,3,'f','lantanide'),
+  E(63,'Eu','Europio',6,3,'f','lantanide'), E(64,'Gd','Gadolinio',6,3,'f','lantanide'),
+  E(65,'Tb','Terbio',6,3,'f','lantanide'), E(66,'Dy','Disprosio',6,3,'f','lantanide'),
+  E(67,'Ho','Olmio',6,3,'f','lantanide'), E(68,'Er','Erbio',6,3,'f','lantanide'),
+  E(69,'Tm','Tulio',6,3,'f','lantanide'), E(70,'Yb','Itterbio',6,3,'f','lantanide'),
+  E(71,'Lu','Lutezio',6,3,'f','lantanide'),
+  E(72,'Hf','Afnio',6,4,'d','transizione'), E(73,'Ta','Tantalio',6,5,'d','transizione'),
+  E(74,'W','Tungsteno',6,6,'d','transizione'), E(75,'Re','Renio',6,7,'d','transizione'),
+  E(76,'Os','Osmio',6,8,'d','transizione'), E(77,'Ir','Iridio',6,9,'d','transizione'),
+  E(78,'Pt','Platino',6,10,'d','transizione'), E(79,'Au','Oro',6,11,'d','transizione'),
+  E(80,'Hg','Mercurio',6,12,'d','transizione'),
+  E(81,'Tl','Tallio',6,13,'p','post'), E(82,'Pb','Piombo',6,14,'p','post'), E(83,'Bi','Bismuto',6,15,'p','post'),
+  E(84,'Po','Polonio',6,16,'p','post'), E(85,'At','Astato',6,17,'p','alogeno'), E(86,'Rn','Radon',6,18,'p','nobile'),
+  // p7
+  E(87,'Fr','Francio',7,1,'s','alcalino'), E(88,'Ra','Radio',7,2,'s','alcalino-terroso'),
+  E(89,'Ac','Attinio',7,3,'f','attinide'), E(90,'Th','Torio',7,3,'f','attinide'),
+  E(91,'Pa','Protoattinio',7,3,'f','attinide'), E(92,'U','Uranio',7,3,'f','attinide'),
+  E(93,'Np','Nettunio',7,3,'f','attinide'), E(94,'Pu','Plutonio',7,3,'f','attinide'),
+  E(95,'Am','Americio',7,3,'f','attinide'), E(96,'Cm','Curio',7,3,'f','attinide'),
+  E(97,'Bk','Berkelio',7,3,'f','attinide'), E(98,'Cf','Californio',7,3,'f','attinide'),
+  E(99,'Es','Einsteinio',7,3,'f','attinide'), E(100,'Fm','Fermio',7,3,'f','attinide'),
+  E(101,'Md','Mendelevio',7,3,'f','attinide'), E(102,'No','Nobelio',7,3,'f','attinide'),
+  E(103,'Lr','Lawrencio',7,3,'f','attinide'),
+  E(104,'Rf','Rutherfordio',7,4,'d','transizione'), E(105,'Db','Dubnio',7,5,'d','transizione'),
+  E(106,'Sg','Seaborgio',7,6,'d','transizione'), E(107,'Bh','Bohrio',7,7,'d','transizione'),
+  E(108,'Hs','Hassio',7,8,'d','transizione'), E(109,'Mt','Meitnerio',7,9,'d','transizione'),
+  E(110,'Ds','Darmstadtio',7,10,'d','transizione'), E(111,'Rg','Roentgenio',7,11,'d','transizione'),
+  E(112,'Cn','Copernicio',7,12,'d','transizione'), E(113,'Nh','Nihonio',7,13,'p','post'),
+  E(114,'Fl','Flerovio',7,14,'p','post'), E(115,'Mc','Moscovio',7,15,'p','post'),
+  E(116,'Lv','Livermorio',7,16,'p','post'), E(117,'Ts','Tennesso',7,17,'p','alogeno'),
+  E(118,'Og','Oganesson',7,18,'p','nobile')
+];
+
+/* ===== Layout mapping ===== */
+const grid=document.getElementById('grid');
+const cellByZ=new Map();
+let lastOpenedCell=null;
+let activeDetailElement=null;
+function positionFor(el){
+  if(el.block==='f'){
+    const baseRow = (el.period===6?9: (el.period===7?10:12));
+    const index = (el.period===6 ? el.Z-57 : el.Z-89);
+    return {col:4+index,row:baseRow};
+  }
+  return {col:el.group,row:el.period};
+}
+function catClass(c){
+  return {
+    'alcalino':'alcalino','alcalino-terroso':'alcalino-terroso','nobile':'nobile','alogeno':'alogeno',
+    'semimetallo':'semimetallo','nonmetallo':'nonmetallo','post':'post','transizione':'transizione',
+    'lantanide':'lantanide','attinide':'attinide'
+  }[c]||'';
+}
+
+/* ===== Render ===== */
+function render(){
+  grid.innerHTML='';
+  cellByZ.clear();
+  for(const el of ELEMENTS){
+    const pos=positionFor(el);
+    const btn=document.createElement('button');
+    btn.className=`cell ${catClass(el.category)} ${el.chonps?'chonps':''}`.trim();
+    btn.style.gridColumn=pos.col; btn.style.gridRow=pos.row;
+    btn.dataset.z=el.Z; btn.dataset.group=el.group||''; btn.dataset.period=el.period||''; btn.dataset.block=el.block||''; btn.dataset.category=el.category||'';
+    btn.title=`${el.name} (${el.sym}) – Z ${el.Z}`;
+    btn.innerHTML=`<span class="z">${el.Z}</span><span class="sym">${el.sym}</span><span class="name">${el.name}</span>`;
+    btn.addEventListener('click',()=>openDetail(el, btn));
+    grid.appendChild(btn);
+    cellByZ.set(el.Z, btn);
+  }
+}
+render();
+
+/* ===== Opacità per gruppi ===== */
+const alphaInputs=document.querySelectorAll('.alphaControls input[type="range"]');
+const btnAlphaReset=document.getElementById('btnAlphaReset');
+function applyAlphaInput(input){
+  const cat=input.dataset.cat;
+  if(!cat) return;
+  const raw=Number(input.value)||100;
+  const clamped=Math.min(100,Math.max(10,raw));
+  if(clamped!==raw) input.value=String(clamped);
+  const normalized=(clamped/100).toFixed(2);
+  document.documentElement.style.setProperty(`--alpha-${cat}`, normalized);
+  const label=document.getElementById(`alphaLabel-${cat}`);
+  if(label) label.textContent=`${clamped}%`;
+}
+alphaInputs.forEach(inp=>{
+  applyAlphaInput(inp);
+  inp.addEventListener('input',()=>applyAlphaInput(inp));
+});
+if(btnAlphaReset){
+  btnAlphaReset.addEventListener('click',()=>{
+    alphaInputs.forEach(inp=>{inp.value='100'; applyAlphaInput(inp);});
+  });
+}
+
+/* ===== Filters ===== */
+const q=document.getElementById('search'), fPeriod=document.getElementById('fPeriod'), fGroup=document.getElementById('fGroup'), fBlock=document.getElementById('fBlock');
+const fCats=Array.from(document.querySelectorAll('.fCat'));
+function applyFilters(){
+  const term=q.value.trim().toLowerCase(), p=fPeriod.value, g=fGroup.value, b=fBlock.value;
+  const allowed=new Set(fCats.filter(c=>c.checked).map(c=>c.value));
+  const cells=grid.querySelectorAll('.cell');
+  for(const c of cells){
+    const el=ELEMENTS.find(x=>x.Z===+c.dataset.z);
+    const hay=[el.sym,el.name,String(el.Z)].join(' ').toLowerCase();
+    const ok=(!term||hay.includes(term)) && (!p||String(el.period)===p) && (!g||String(el.group)===g) && (!b||el.block===b) && allowed.has(el.category);
+    c.style.display=ok?'':'none';
+    c.style.filter=(term && !hay.includes(term))?'grayscale(0.9) opacity(.45)':'';
+    c.style.outline=(term && hay.includes(term))?'2px solid var(--accent-2)':'';
+  }
+}
+[q,fPeriod,fGroup,fBlock].forEach(inp=>inp.addEventListener('input',applyFilters));
+fCats.forEach(cb=>cb.addEventListener('change',applyFilters));
+document.getElementById('btnReset').addEventListener('click',()=>{
+  q.value=''; fPeriod.value=''; fGroup.value=''; fBlock.value=''; fCats.forEach(c=>c.checked=true);
+  document.getElementById('btnChonps').setAttribute('aria-pressed','false'); toggleChonps(false); applyFilters();
+});
+
+/* ===== CHONPS ===== */
+const btnChonps=document.getElementById('btnChonps');
+btnChonps.addEventListener('click',()=>{
+  const on=btnChonps.getAttribute('aria-pressed')!=='true';
+  btnChonps.setAttribute('aria-pressed',String(on)); toggleChonps(on);
+});
+function toggleChonps(on){
+  grid.querySelectorAll('.cell').forEach(c=>{
+    const el=ELEMENTS.find(x=>x.Z===+c.dataset.z);
+    if(el?.chonps){ c.classList.toggle('highlight',on); c.style.transform=on?'translateY(-1px) scale(1.02)':''; }
+  });
+}
+
+/* ===== Ripple animation ===== */
+document.getElementById('btnAnim').addEventListener('click',()=>{
+  const cells=Array.from(grid.querySelectorAll('.cell')).sort((a,b)=>(+a.dataset.z)-(+b.dataset.z));
+  let i=0; for(const c of cells){ setTimeout(()=>{ c.classList.add('highlight'); setTimeout(()=>c.classList.remove('highlight'),650); },45*i++); }
+});
+
+/* ===== Detail modal ===== */
+const dlg=document.getElementById('detail'), dTitle=document.getElementById('d-title'), dMeta=document.getElementById('d-meta'), dKV=document.getElementById('d-kv'), dPos=document.getElementById('d-pos'), dAux=document.getElementById('d-aux');
+const atomShells=document.getElementById('atomShells');
+const atomNucleus=document.getElementById('atomNucleus');
+const pCount=document.getElementById('pCount');
+const nCount=document.getElementById('nCount');
+const eCount=document.getElementById('eCount');
+const dFocus=document.getElementById('d-focus');
+const dToggleChonps=document.getElementById('d-toggle-chonps');
+const SHELL_CAP=[2,8,18,32,32,18,8];
+function V(x){ return (x===undefined||x===null||x===''||x==='—')?'—':x; }
+function row(key,val){ const r=document.createElement('div'); r.className='row'; r.innerHTML=`<div class="key">${key}</div><div class="val">${V(val)}</div>`; return r; }
+function catLabel(c){
+  return {"alcalino":"Metallo alcalino","alcalino-terroso":"Metallo alcalino-terroso","nonmetallo":"Non-metallo","semimetallo":"Semimetallo","alogeno":"Alogeno","nobile":"Gas nobile","post":"Metallo post-transizione","transizione":"Metallo di transizione","lantanide":"Lantanide","attinide":"Attinide"}[c]||"—";
+}
+function pseudoRand(seed){ const x=Math.sin(seed)*10000; return x-Math.floor(x); }
+function distributeElectrons(Z){
+  const shells=[]; let remaining=Z;
+  for(let i=0;i<SHELL_CAP.length;i++){
+    const take=Math.min(remaining,SHELL_CAP[i]);
+    shells.push(take);
+    remaining-=take;
+    if(remaining<=0) break;
+  }
+  return shells;
+}
+function drawAtom(Z,N){
+  if(!atomShells||!atomNucleus) return;
+  atomShells.innerHTML='';
+  atomNucleus.innerHTML='';
+  const cx=200, cy=200;
+  const neutrons=Number.isFinite(N)?Math.max(0,N):Math.max(0,Z);
+  const coreCount=Math.max(1, Math.min(90, Z+neutrons));
+  const coreRadius=Math.min(42, 10+Math.sqrt(coreCount)*2.2);
+  for(let i=0;i<coreCount;i++){
+    const angle=pseudoRand(Z*37+i)*Math.PI*2;
+    const r=coreRadius*Math.sqrt(pseudoRand(Z*53+i));
+    const x=cx+r*Math.cos(angle);
+    const y=cy+r*Math.sin(angle);
+    const isProton=i<Math.min(Z,coreCount);
+    const circle=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    circle.setAttribute('cx',x.toFixed(2));
+    circle.setAttribute('cy',y.toFixed(2));
+    circle.setAttribute('r','3.6');
+    circle.setAttribute('fill',isProton?'#ef4444':'#6b7280');
+    circle.setAttribute('filter','url(#softGlow)');
+    atomNucleus.appendChild(circle);
+  }
+  const shells=distributeElectrons(Z);
+  const baseR=coreRadius+26;
+  for(let i=0;i<shells.length;i++){
+    const count=shells[i];
+    const radius=baseR+i*22;
+    const g=document.createElementNS('http://www.w3.org/2000/svg','g');
+    g.setAttribute('class',`orbit spin${(i%7)+1}`);
+    const ring=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    ring.setAttribute('cx',cx);
+    ring.setAttribute('cy',cy);
+    ring.setAttribute('r',radius);
+    ring.setAttribute('fill','none');
+    ring.setAttribute('stroke','rgba(255,255,255,.25)');
+    ring.setAttribute('stroke-width','1');
+    g.appendChild(ring);
+    const offset=pseudoRand(Z*71+i)*Math.PI*2;
+    for(let k=0;k<count;k++){
+      const theta=offset+(k/count)*Math.PI*2;
+      const ex=cx+radius*Math.cos(theta);
+      const ey=cy+radius*Math.sin(theta);
+      const dot=document.createElementNS('http://www.w3.org/2000/svg','circle');
+      dot.setAttribute('cx',ex.toFixed(2));
+      dot.setAttribute('cy',ey.toFixed(2));
+      dot.setAttribute('r','4');
+      dot.setAttribute('fill','#60a5fa');
+      dot.setAttribute('filter','url(#softGlow)');
+      g.appendChild(dot);
+    }
+    atomShells.appendChild(g);
+  }
+}
+function closeDetail(){
+  if(typeof dlg.close==='function'){ dlg.close(); } else { dlg.removeAttribute('open'); }
+  activeDetailElement=null;
+}
+function openDetail(el, cell){
+  lastOpenedCell=cell||cellByZ.get(el.Z)||null;
+  activeDetailElement=el;
+  if(dFocus) dFocus.disabled=!lastOpenedCell;
+  dTitle.textContent=`${el.name} (${el.sym})`;
+  dMeta.innerHTML=`Z ${el.Z} • Gruppo ${V(el.group)} • Periodo ${V(el.period)} • Blocco ${V(el.block)}`;
+  dKV.innerHTML='';
+  const P=el.props||{};
+  const atomicMass=parseFloat(P.atomic_mass ?? P.atomicMass);
+  const massNumber=Number.isFinite(atomicMass)?Math.round(atomicMass):null;
+  const neutrons=massNumber!==null?Math.max(0,massNumber-el.Z):null;
+  const fields=[
+    ["Categoria",catLabel(el.category)],
+    ["Numero di massa (A)",massNumber!==null?`≈ ${massNumber}`:null],
+    ["Massa atomica (u)",P.atomic_mass],
+    ["Stato standard",P.phase||P.state],
+    ["Aspetto",P.appearance],
+    ["Configurazione elettronica",P.electron_configuration||P.electronConfig],
+    ["Elettronegatività (Pauling)",P.electronegativity_pauling||P.electronegativity],
+    ["Raggio atomico (pm)",P.atomic_radius||P.radius],
+    ["R. covalente (pm)",P.covalent_radius_pm],
+    ["Energia 1ª ionizzazione (kJ/mol)",P.ionization_energy_kjmol||P.ionization],
+    ["Stati di ossidazione",P.oxidation_states||P.oxidation],
+    ["Densità (g/cm³)",P.density_gcm3||P.density],
+    ["Punto di fusione (K)",P.melt||P.melting_k],
+    ["Punto di ebollizione (K)",P.boil||P.boiling_k],
+    ["Scopritore",P.discovered_by||P.discoveredBy],
+    ["Anno di scoperta",P.discovery_year||P.year],
+    ["Impieghi chiave",P.uses]
+  ];
+  for(const [k,v] of fields) dKV.appendChild(row(k,v));
+  if(pCount) pCount.textContent=el.Z;
+  if(eCount) eCount.textContent=el.Z;
+  if(nCount) nCount.textContent=Number.isFinite(neutrons)?neutrons:'—';
+  drawAtom(el.Z, neutrons);
+  if(dToggleChonps){
+    dToggleChonps.disabled=!el.chonps;
+    dToggleChonps.textContent=el.chonps?"Evidenzia CHONPS":"Fuori da CHONPS";
+  }
+  const pos=positionFor(el);
+  dPos.textContent=`Posizione: gruppo ${V(el.group)}, periodo ${V(el.period)} (col ${pos.col}, riga ${pos.row}).`;
+  const extra=[];
+  if(massNumber!==null) extra.push(`Numero di massa ≈ ${massNumber}`);
+  if(el.chonps) extra.push('Appartiene al gruppo didattico CHONPS.');
+  dAux.textContent=extra.join(' • ');
+  if(typeof dlg.showModal==='function'){ dlg.showModal(); } else { dlg.setAttribute('open',''); }
+}
+document.getElementById('d-close').addEventListener('click',closeDetail);
+dlg.addEventListener('click',(e)=>{ const rect=dlg.querySelector('.modal')?.getBoundingClientRect(); if(!rect) return; const x=e.clientX,y=e.clientY; if(x<rect.left||x>rect.right||y<rect.top||y>rect.bottom) closeDetail(); });
+dlg.addEventListener('close',()=>{activeDetailElement=null;});
+if(dFocus){
+  dFocus.addEventListener('click',()=>{
+    if(!lastOpenedCell) return;
+    try{ lastOpenedCell.scrollIntoView({block:'center',inline:'center',behavior:'smooth'}); }catch(err){}
+    lastOpenedCell.classList.add('highlight');
+    setTimeout(()=>lastOpenedCell?.classList.remove('highlight'),650);
+  });
+}
+if(dToggleChonps){
+  dToggleChonps.addEventListener('click',()=>{
+    if(!activeDetailElement?.chonps) return;
+    if(btnChonps.getAttribute('aria-pressed')!=='true'){
+      btnChonps.setAttribute('aria-pressed','true');
+      toggleChonps(true);
+    }else{
+      toggleChonps(true);
+    }
+    const cell=cellByZ.get(activeDetailElement.Z);
+    if(cell){
+      cell.classList.add('highlight');
+      setTimeout(()=>cell.classList.remove('highlight'),650);
+    }
+  });
+}
+document.addEventListener('keydown',(ev)=>{
+  if(ev.key==='Escape' && (dlg.open || dlg.hasAttribute('open'))){
+    closeDetail();
+  }
+});
+
+/* ====== Fetch & merge from public dataset ======
+ * Primary: Bowserinator/Periodic-Table-JSON (raw GitHub).
+ * Temperatures in Kelvin; density g/L for gases, g/cm³ for solids/liquids.
+ */
+const statusEl=document.getElementById('fetchStatus');
+async function fetchAndMerge(){
+  const url="https://raw.githubusercontent.com/Bowserinator/Periodic-Table-JSON/master/periodic-table.json";
+  statusEl.textContent="Caricamento dati elementi…";
+  try{
+    const res=await fetch(url,{cache:'no-store'});
+    if(!res.ok) throw new Error(res.status+" "+res.statusText);
+    const data=await res.json();
+    const items=(data.elements||data||[]);
+    const byZ=new Map(items.map(it=>[Number(it.number), it]));
+    // merge
+    for(const el of ELEMENTS){
+      const src=byZ.get(el.Z);
+      if(!src) continue;
+      const p=el.props;
+      p.atomic_mass=src.atomic_mass;
+      p.appearance=src.appearance;
+      p.boil=src.boil; p.melt=src.melt;
+      p.density_gcm3=src.density;
+      p.electron_configuration=src.electron_configuration;
+      p.electronegativity_pauling=src.electronegativity_pauling;
+      p.phase=src.phase;
+      p.ionization_energy_kjmol = src.ionization_energies && src.ionization_energies.length ? (src.ionization_energies[0]) : undefined;
+      p.oxidation_states=src.oxidation_states;
+      p.discovery_year=src.discovered ? String(src.discovered) : src.discovery_year;
+      p.discovered_by=src.discovered_by || src.named_by;
+      // attempt covalent radius if present in shells? (Bowserinator may not include); leave undefined
+    }
+    statusEl.textContent="Dati integrati ✔";
+    // brief celebratory animation on updated cells
+    document.getElementById('btnAnim').click();
+  }catch(err){
+    console.error(err);
+    statusEl.textContent="Impossibile caricare (CORS o rete). Prova da server HTTPS o scarica e collega il JSON in locale.";
+  }
+}
+document.getElementById('btnFetch').addEventListener('click', fetchAndMerge);
+// Auto-fetch on load
+fetchAndMerge();
+
+/* Initial filters */
+applyFilters();
+</script>
+</body>
+</html>
