@@ -3,6 +3,9 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
+<meta http-equiv="Pragma" content="no-cache"/>
+<meta http-equiv="Expires" content="0"/>
 <title>Tavola Periodica – Sintesi Interattiva</title>
 <style>
 :root{
@@ -297,7 +300,15 @@ footer.modalbar{grid-column:1/-1;display:flex;justify-content:space-between;alig
   </article>
 </section>
 
-<script src="element-props.js"></script>
+<script>
+  // Forza il download dell'ultima versione del dataset offline evitando cache aggressive di GitHub Pages.
+  (function(){
+    const raw = document.lastModified || '';
+    const parsed = Date.parse(raw);
+    const version = Number.isFinite(parsed) ? String(parsed) : String(Date.now());
+    document.write(`<script src="element-props.js?v=${version}"><\/script>`);
+  })();
+</script>
 <script>
 /* ===== Core dataset 118 (structure only; props filled via web dataset) ===== */
 const E=(Z,sym,name,period,group,block,category,chonps=false)=>({Z,sym,name,period,group,block,category,chonps,props:{}});
