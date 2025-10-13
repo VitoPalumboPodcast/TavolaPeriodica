@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Tavola Periodica — A/Z + intestazioni + Modale completa + Animazione</title>
+<meta name="description" content="Tavola Periodica interattiva: notazione A/Z, gruppi/periodi, modale completa con animazione atomica e comandi CHONPS/centra cella."/>
+<style>
+  :root{
+    --bg:#fff; --fg:#111; --muted:#555; --border:#e5e7eb;
+    --accent:#0ea5e9; --pill:#334155; --shadow:0 12px 40px rgba(0,0,0,.18);
+    --cellW:60px; --cellH:66px; --gap:6px;
+    --cell:#f8fafc; --cellHover:#eef2ff; --hl:#f59e0b;
+    --metal:#c7d2fe; --nonmetal:#bbf7d0; --metalloid:#fecaca;
+    --noble:#e0e7ff; --halogen:#fee2e2; --alkali:#fef3c7; --alkaline:#dcfce7;
+    --transition:#e2e8f0; --post:#f1f5f9; --lanact:#ffe4e6;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0; font:16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial; color:var(--fg); background:var(--bg);}
+  header, main, footer{max-width:1200px; margin:auto; padding:16px}
+  header h1{margin:.2rem 0 0 0}
+  header p.lead{margin:.25rem 0 1rem 0; color:var(--muted)}
+
+  .toolbar{display:flex; flex-wrap:wrap; gap:.5rem; align-items:center; padding:.75rem; border:1px solid var(--border); border-radius:12px; background:#fafafa}
+  .toolbar input[type="search"], .toolbar select{padding:.55rem .7rem; border:1px solid var(--border); border-radius:10px; min-width:220px}
+  .toolbar button{padding:.55rem .8rem; border:1px solid var(--border); background:#fff; border-radius:10px; cursor:pointer}
+  .toolbar .pill{background:var(--pill); color:#fff; border:none}
+
+  .legend{display:flex; flex-wrap:wrap; gap:.5rem .8rem; margin:.6rem 0}
+  .legend .pill{display:inline-flex; align-items:center; gap:.45rem; padding:.35rem .65rem; border:1px solid var(--border); border-radius:999px; background:#fff; cursor:pointer; user-select:none}
+  .legend .pill i{display:inline-block; width:14px; height:14px; border-radius:3px}
+  .legend .pill.active{outline:2px solid var(--accent); box-shadow:0 0 0 4px rgba(14,165,233,.18)}
+
+  .gridWrap{border:1px solid var(--border); border-radius:14px; background:#fff; padding:10px; overflow:visible}
+  .gridTable{display:grid; grid-template-columns: auto repeat(18, var(--cellW)); gap: var(--gap) var(--gap); align-items:start}
+  .hdr, .rowlab{font:600 calc(var(--cellW)*0.14)/1 ui-monospace; color:#374151; text-align:center}
+  .hdr{height: calc(var(--cellH)*0.6); display:flex; align-items:center; justify-content:center}
+  .rowlab{width: calc(var(--cellW)*0.8); display:flex; align-items:center; justify-content:center}
+  .void{visibility:hidden}
+
+  .cell{
+    position:relative; width:var(--cellW); height:var(--cellH); border:1px solid var(--border);
+    border-radius:8px; background:var(--cell); padding:4px; display:flex; flex-direction:column;
+    justify-content:center; align-items:center; cursor:pointer; transition:transform .05s ease
+  }
+  .cell:hover{background:var(--cellHover); transform:translateY(-1px)}
+  .cell:focus-visible{outline:2px solid var(--accent)}
+  .sym{font-weight:800; font-size:calc(var(--cellW) * 0.36); line-height:1}
+  .name,.z{display:none}
+
+  .nuclideA, .nuclideZ{
+    position:absolute; left:6px; font-weight:700; color:#1f2937; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  .nuclideA{ top:6px; font-size:calc(var(--cellW) * 0.16) }
+  .nuclideZ{ bottom:6px; font-size:calc(var(--cellW) * 0.16) }
+
+  .cat-metal{background:var(--metal)}
+  .cat-nonmetal{background:var(--nonmetal)}
+  .cat-metalloid{background:var(--metalloid)}
+  .sub-alkali{box-shadow: inset 0 0 0 3px var(--alkali)}
+  .sub-alkaline{box-shadow: inset 0 0 0 3px var(--alkaline)}
+  .sub-transition{box-shadow: inset 0 0 0 3px var(--transition)}
+  .sub-post{box-shadow: inset 0 0 0 3px var(--post)}
+  .sub-halogen{box-shadow: inset 0 0 0 3px var(--halogen)}
+  .sub-noble{box-shadow: inset 0 0 0 3px var(--noble)}
+  .sub-lanthanoid, .sub-actinoid{box-shadow: inset 0 0 0 3px var(--lanact)}
+
+  .highlight{outline:3px solid var(--hl); box-shadow:0 0 0 4px rgba(245,158,11,.25), inset 0 0 0 3px #fde68a, 0 6px 18px rgba(245,158,11,.35)}
+  .selected{outline:3px solid var(--accent); box-shadow:0 0 0 3px rgba(14,165,233,.25)}
+  .dim{opacity:.18; filter:grayscale(1) contrast(.85)}
+
+  /* tooltip sintetico */
+  .tip{
+    position:absolute; z-index:9999; left:0; bottom:100%; transform:translateY(-6px);
+    min-width:180px; max-width:240px; background:#111; color:#fff; padding:.6rem .7rem; border-radius:10px; font-size:calc(var(--cellW) * 0.12); box-shadow:0 6px 20px rgba(0,0,0,.25); display:none; pointer-events:none
+  }
+  .tip:after{content:""; position:absolute; left:12px; top:100%; border:6px solid transparent; border-top-color:#111}
+  .tip-below .tip{ top:100%; bottom:auto; transform:translateY(6px) }
+  .tip-below .tip:after{ top:auto; bottom:100%; border:6px solid transparent; border-bottom-color:#111 }
+
+  footer{color:var(--muted); font-size:.9rem}
+
+  /* MODALE */
+  .modalBackdrop{ position:fixed; inset:0; background:rgba(0,0,0,.4);
+    display:none; align-items:center; justify-content:center; z-index:10000; padding:16px; }
+  .modal{ width:min(760px, 96vw); max-height:92vh; overflow:auto;
+    background:#fff; border:1px solid var(--border); border-radius:16px; box-shadow:var(--shadow); padding:14px; display:flex; flex-direction:column; gap:10px; }
+  .modalHeader{display:flex; align-items:center; justify-content:space-between; gap:8px}
+  .symBig{font-size:2.6rem; font-weight:800; line-height:1}
+  .zBadge{font:700 .78rem ui-monospace; border:1px solid var(--border); border-radius:8px; padding:.15rem .45rem; background:#fafafa}
+  .catLine{font-size:.95rem; color:var(--muted)}
+  .chips{display:flex; gap:.4rem; flex-wrap:wrap}
+  .chip{font:.78rem/1.1 ui-sans-serif; border:1px solid var(--border); padding:.2rem .5rem; border-radius:999px; background:#fff}
+  .chip.good{border-color:#86efac; background:#f0fdf4}
+  .btn{padding:.5rem .7rem; border:1px solid var(--border); border-radius:10px; background:#fff; cursor:pointer}
+  .btn.primary{background:var(--pill); color:#fff; border:none}
+  .show{display:flex}
+
+  /* ATOM ANIMATION */
+  .atomBox{display:grid; grid-template-columns: 1fr 300px; gap:12px; align-items:center}
+  .atomViz{background:#0b1020; color:#fff; border-radius:14px; padding:8px; border:1px solid #0b1b3a}
+  .legendRow{display:flex; gap:8px; align-items:center; font:14px/1.4 ui-monospace; color:#111}
+  .dot{display:inline-block; width:10px; height:10px; border-radius:50%}
+  .p{background:#ef4444} .n{background:#6b7280} .e{background:#60a5fa}
+  .orbit{transform-origin: 50% 50%;}
+  @keyframes spinCW{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+  @keyframes spinCCW{from{transform:rotate(360deg)}to{transform:rotate(0)}}
+  .spin1{animation:spinCW 6s linear infinite}
+  .spin2{animation:spinCCW 8s linear infinite}
+  .spin3{animation:spinCW 10s linear infinite}
+  .spin4{animation:spinCCW 12s linear infinite}
+  .spin5{animation:spinCW 14s linear infinite}
+  .spin6{animation:spinCCW 16s linear infinite}
+  .spin7{animation:spinCW 18s linear infinite}
+</style>
+</head>
+<body>
+<header>
+  <h1>Tavola Periodica — <span style="font-weight:500">Modale completa + Animazione</span></h1>
+  <p class="lead">Clicca una casella per aprire la scheda con: nome, simbolo, Z, categoria, gruppo/periodo, CHONPS, promemoria didattico e l’<strong>animazione dell’atomo</strong>.</p>
+
+  <div class="toolbar" role="region" aria-label="Strumenti">
+    <input id="q" type="search" placeholder="Cerca: simbolo, nome o Z…" aria-label="Cerca elemento"/>
+    <select id="category" aria-label="Filtro sottocategoria">
+      <option value="">Tutte le sottocategorie</option>
+      <option value="alkali">Metalli alcalini</option>
+      <option value="alkaline">Metalli alcalino-terrosi</option>
+      <option value="transition">Metalli di transizione</option>
+      <option value="post">Metalli post-transizione</option>
+      <option value="metalloid">Semimetalli</option>
+      <option value="nonmetal">Non-metalli</option>
+      <option value="halogen">Alogeni</option>
+      <option value="noble">Gas nobili</option>
+      <option value="lanthanoid">Lantanidi</option>
+      <option value="actinoid">Attinidi</option>
+    </select>
+    <div class="filters" aria-label="Filtri rapidi" style="display:flex;gap:.5rem;flex-wrap:wrap">
+      <label><input type="checkbox" id="onlyMetals"> Solo metalli</label>
+      <label><input type="checkbox" id="onlyNonMetals"> Solo non-metalli</label>
+      <label><input type="checkbox" id="onlyMetalloids"> Solo semimetalli</label>
+    </div>
+    <button id="btnClear">Pulisci filtri</button>
+    <button id="btnCHONPS" class="pill" title="Evidenzia elementi della vita">Evidenzia CHONPS</button>
+  </div>
+
+  <div class="legend" aria-label="Legenda">
+    <span class="pill" data-type="macro" data-value="metal"><i style="background:var(--metal)"></i> Metalli</span>
+    <span class="pill" data-type="macro" data-value="nonmetal"><i style="background:var(--nonmetal)"></i> Non-metalli</span>
+    <span class="pill" data-type="macro" data-value="metalloid"><i style="background:var(--metalloid)"></i> Semimetalli</span>
+    <span class="pill" data-type="sub" data-value="alkali"><i style="background:var(--alkali)"></i> Alcalini</span>
+    <span class="pill" data-type="sub" data-value="alkaline"><i style="background:var(--alkaline)"></i> Alcalino-terrosi</span>
+    <span class="pill" data-type="sub" data-value="transition"><i style="background:var(--transition)"></i> Transizione</span>
+    <span class="pill" data-type="sub" data-value="post"><i style="background:var(--post)"></i> Post-transizione</span>
+    <span class="pill" data-type="sub" data-value="halogen"><i style="background:var(--halogen)"></i> Alogeni</span>
+    <span class="pill" data-type="sub" data-value="noble"><i style="background:var(--noble)"></i> Gas nobili</span>
+    <span class="pill" data-type="sub" data-value="lanthanoid"><i style="background:var(--lanact)"></i> Lantanidi</span>
+    <span class="pill" data-type="sub" data-value="actinoid"><i style="background:var(--lanact)"></i> Attinidi</span>
+  </div>
+</header>
+
+<main>
+  <section class="gridWrap" aria-label="Tavola Periodica (principale con intestazioni)">
+    <div id="gridTable" class="gridTable"></div>
+  </section>
+
+  <div class="subgridTitle" style="margin:.8rem 0 .3rem 4px; font-weight:700">Lantanidi</div>
+  <section class="gridWrap" aria-label="Lantanidi (Ce–Lu)">
+    <div id="fgrid6" style="display:grid; grid-template-columns: repeat(14, var(--cellW)); gap: var(--gap)"></div>
+  </section>
+  <div class="subgridTitle" style="margin:.8rem 0 .3rem 4px; font-weight:700">Attinidi</div>
+  <section class="gridWrap" aria-label="Attinidi (Th–Lr)">
+    <div id="fgrid7" style="display:grid; grid-template-columns: repeat(14, var(--cellW)); gap: var(--gap)"></div>
+  </section>
+
+  <p class="note" style="background:#fffbe6;border:1px solid #fde68a;padding:.6rem .8rem;border-radius:10px">Intestazioni (1–18 = <strong>gruppi</strong>, 1–7 = <strong>periodi</strong>). Casella: <strong>A</strong> in alto a sinistra, <strong>Z</strong> in basso a sinistra, simbolo al centro.</p>
+
+  <!-- MODALE -->
+  <div id="modalBackdrop" class="modalBackdrop" role="presentation" aria-hidden="true">
+    <section id="modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="cardTitle">
+      <div class="modalHeader">
+        <div>
+          <div id="cardSym" class="symBig">—</div>
+          <div id="cardTitle" style="font-weight:700; margin-top:2px">Seleziona un elemento</div>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px">
+          <span id="cardZ" class="zBadge">Z —</span>
+          <button id="cardClose" class="btn" aria-label="Chiudi scheda">Chiudi</button>
+        </div>
+      </div>
+      <div id="cardCat" class="catLine">Categoria: —</div>
+      <div class="chips">
+        <span id="chipGrp" class="chip">Gruppo —</span>
+        <span id="chipPer" class="chip">Periodo —</span>
+        <span id="chipSub" class="chip">—</span>
+        <span id="chipCHONPS" class="chip good" style="display:none">CHONPS</span>
+      </div>
+
+      <div class="atomBox">
+        <div class="atomViz">
+          <svg id="atomSVG" width="100%" viewBox="0 0 400 400" role="img" aria-label="Animazione della struttura atomica">
+            <defs>
+              <filter id="softGlow" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur in="SourceGraphic" stdDeviation="2" result="blur"/>
+                <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+              </filter>
+            </defs>
+            <g id="nucleus"></g>
+            <g id="shells"></g>
+          </svg>
+        </div>
+        <div>
+          <div class="legendRow"><span class="dot p"></span> Protoni (P<sup>+</sup>): <span id="pCount">—</span></div>
+          <div class="legendRow"><span class="dot n"></span> Neutroni (N): <span id="nCount">—</span> <small style="color:#6b7280">(N = A − Z)</small></div>
+          <div class="legendRow"><span class="dot e"></span> Elettroni (e<sup>−</sup>): <span id="eCount">—</span></div>
+          <div style="margin-top:8px; font-size:12px; color:#374151">
+            Gusci tipo <em>Bohr</em> (capacità 2,8,18,32,32,18,8). Rotazioni alternate per rendere l’idea del moto rapido.
+          </div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:10px">
+            <button id="cardCHONPS" class="btn primary">Evidenzia CHONPS</button>
+            <button id="cardFocusCell" class="btn">Centra cella</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="note" style="margin-top:.3rem;background:#fffbe6;border:1px solid #fde68a;padding:.6rem .8rem;border-radius:10px">
+        <strong>Ricorda</strong>
+        <ul id="cardNotes" style="margin:.35rem 0 0 1rem"></ul>
+      </div>
+    </section>
+  </div>
+</main>
+
+<footer>© Lezione 1 — Tavola Periodica (118 elementi). Modale completa e animazione atomica.</footer>
+
+<script>
+/* ============
+   DATASET 118 ELEMENTI (IT) — include A (numero di massa didattico)
+   Z | sym | name | grp | per | col | macro | sub | frow | fcol | A
+   ============ */
+const RAW = `
+1|H|Idrogeno|1|1|1|nonmetal|nonmetal|0|0|1
+2|He|Elio|18|1|18|nonmetal|noble|0|0|4
+
+3|Li|Litio|1|2|1|metal|alkali|0|0|7
+4|Be|Berillio|2|2|2|metal|alkaline|0|0|9
+5|B|Boro|13|2|13|metalloid|metalloid|0|0|11
+6|C|Carbonio|14|2|14|nonmetal|nonmetal|0|0|12
+7|N|Azoto|15|2|15|nonmetal|nonmetal|0|0|14
+8|O|Ossigeno|16|2|16|nonmetal|nonmetal|0|0|16
+9|F|Fluoro|17|2|17|nonmetal|halogen|0|0|19
+10|Ne|Neon|18|2|18|nonmetal|noble|0|0|20
+
+11|Na|Sodio|1|3|1|metal|alkali|0|0|23
+12|Mg|Magnesio|2|3|2|metal|alkaline|0|0|24
+13|Al|Alluminio|13|3|13|metal|post|0|0|27
+14|Si|Silicio|14|3|14|metalloid|metalloid|0|0|28
+15|P|Fosforo|15|3|15|nonmetal|nonmetal|0|0|31
+16|S|Zolfo|16|3|16|nonmetal|nonmetal|0|0|32
+17|Cl|Cloro|17|3|17|nonmetal|halogen|0|0|35
+18|Ar|Argon|18|3|18|nonmetal|noble|0|0|40
+
+19|K|Potassio|1|4|1|metal|alkali|0|0|39
+20|Ca|Calcio|2|4|2|metal|alkaline|0|0|40
+21|Sc|Scandio|3|4|3|metal|transition|0|0|45
+22|Ti|Titanio|4|4|4|metal|transition|0|0|48
+23|V|Vanadio|5|4|5|metal|transition|0|0|51
+24|Cr|Cromo|6|4|6|metal|transition|0|0|52
+25|Mn|Manganese|7|4|7|metal|transition|0|0|55
+26|Fe|Ferro|8|4|8|metal|transition|0|0|56
+27|Co|Cobalto|9|4|9|metal|transition|0|0|59
+28|Ni|Nichel|10|4|10|metal|transition|0|0|58
+29|Cu|Rame|11|4|11|metal|transition|0|0|63
+30|Zn|Zinco|12|4|12|metal|transition|0|0|64
+31|Ga|Gallio|13|4|13|metal|post|0|0|69
+32|Ge|Germanio|14|4|14|metalloid|metalloid|0|0|74
+33|As|Arsenico|15|4|15|metalloid|metalloid|0|0|75
+34|Se|Selenio|16|4|16|nonmetal|nonmetal|0|0|79
+35|Br|Bromo|17|4|17|nonmetal|halogen|0|0|79
+36|Kr|Kripton|18|4|18|nonmetal|noble|0|0|84
+
+37|Rb|Rubidio|1|5|1|metal|alkali|0|0|85
+38|Sr|Stronzio|2|5|2|metal|alkaline|0|0|88
+39|Y|Ittrio|3|5|3|metal|transition|0|0|89
+40|Zr|Zirconio|4|5|4|metal|transition|0|0|90
+41|Nb|Niobio|5|5|5|metal|transition|0|0|93
+42|Mo|Molibdeno|6|5|6|metal|transition|0|0|96
+43|Tc|Tecnezio|7|5|7|metal|transition|0|0|98
+44|Ru|Rutenio|8|5|8|metal|transition|0|0|101
+45|Rh|Rodio|9|5|9|metal|transition|0|0|103
+46|Pd|Palladio|10|5|10|metal|transition|0|0|106
+47|Ag|Argento|11|5|11|metal|transition|0|0|107
+48|Cd|Cadmio|12|5|12|metal|transition|0|0|114
+49|In|Indio|13|5|13|metal|post|0|0|115
+50|Sn|Stagno|14|5|14|metal|post|0|0|120
+51|Sb|Antimonio|15|5|15|metalloid|metalloid|0|0|121
+52|Te|Tellurio|16|5|16|metalloid|metalloid|0|0|128
+53|I|Iodio|17|5|17|nonmetal|halogen|0|0|127
+54|Xe|Xeno|18|5|18|nonmetal|noble|0|0|132
+
+55|Cs|Cesio|1|6|1|metal|alkali|0|0|133
+56|Ba|Bario|2|6|2|metal|alkaline|0|0|138
+57|La|Lantanio|3|6|3|metal|transition|0|0|139
+58|Ce|Cerio|0|6|0|metal|lanthanoid|6|1|140
+59|Pr|Praseodimio|0|6|0|metal|lanthanoid|6|2|141
+60|Nd|Neodimio|0|6|0|metal|lanthanoid|6|3|142
+61|Pm|Promezio|0|6|0|metal|lanthanoid|6|4|145
+62|Sm|Samario|0|6|0|metal|lanthanoid|6|5|152
+63|Eu|Europio|0|6|0|metal|lanthanoid|6|6|153
+64|Gd|Gadolinio|0|6|0|metal|lanthanoid|6|7|158
+65|Tb|Terbio|0|6|0|metal|lanthanoid|6|8|159
+66|Dy|Disprosio|0|6|0|metal|lanthanoid|6|9|164
+67|Ho|Olmio|0|6|0|metal|lanthanoid|6|10|165
+68|Er|Erbio|0|6|0|metal|lanthanoid|6|11|166
+69|Tm|Tulio|0|6|0|metal|lanthanoid|6|12|169
+70|Yb|Itterbio|0|6|0|metal|lanthanoid|6|13|174
+71|Lu|Lutezio|3|6|3|metal|transition|0|0|175
+72|Hf|Afnio|4|6|4|metal|transition|0|0|180
+73|Ta|Tantalio|5|6|5|metal|transition|0|0|181
+74|W|Tungsteno|6|6|6|metal|transition|0|0|184
+75|Re|Renio|7|6|7|metal|transition|0|0|187
+76|Os|Osmio|8|6|8|metal|transition|0|0|192
+77|Ir|Iridio|9|6|9|metal|transition|0|0|193
+78|Pt|Platino|10|6|10|metal|transition|0|0|195
+79|Au|Oro|11|6|11|metal|transition|0|0|197
+80|Hg|Mercurio|12|6|12|metal|transition|0|0|202
+81|Tl|Tallio|13|6|13|metal|post|0|0|205
+82|Pb|Piombo|14|6|14|metal|post|0|0|208
+83|Bi|Bismuto|15|6|15|metal|post|0|0|209
+84|Po|Polonio|16|6|16|metal|post|0|0|209
+85|At|Astatino|17|6|17|nonmetal|halogen|0|0|210
+86|Rn|Radon|18|6|18|nonmetal|noble|0|0|222
+
+87|Fr|Francio|1|7|1|metal|alkali|0|0|223
+88|Ra|Radio|2|7|2|metal|alkaline|0|0|226
+89|Ac|Attinio|3|7|3|metal|transition|0|0|227
+90|Th|Torio|0|7|0|metal|actinoid|7|1|232
+91|Pa|Protoattinio|0|7|0|metal|actinoid|7|2|231
+92|U|Uranio|0|7|0|metal|actinoid|7|3|238
+93|Np|Nettunio|0|7|0|metal|actinoid|7|4|237
+94|Pu|Plutonio|0|7|0|metal|actinoid|7|5|244
+95|Am|Americio|0|7|0|metal|actinoid|7|6|243
+96|Cm|Curio|0|7|0|metal|actinoid|7|7|247
+97|Bk|Berkelio|0|7|0|metal|actinoid|7|8|247
+98|Cf|Californio|0|7|0|metal|actinoid|7|9|251
+99|Es|Einsteinio|0|7|0|metal|actinoid|7|10|252
+100|Fm|Fermio|0|7|0|metal|actinoid|7|11|257
+101|Md|Mendelevio|0|7|0|metal|actinoid|7|12|258
+102|No|Nobelio|0|7|0|metal|actinoid|7|13|259
+103|Lr|Laurenzio|3|7|3|metal|transition|0|0|262
+104|Rf|Rutherfordio|4|7|4|metal|transition|0|0|267
+105|Db|Dubnio|5|7|5|metal|transition|0|0|268
+106|Sg|Seaborgio|6|7|6|metal|transition|0|0|271
+107|Bh|Borio|7|7|7|metal|transition|0|0|270
+108|Hs|Hassio|8|7|8|metal|transition|0|0|277
+109|Mt|Meitnerio|9|7|9|metal|transition|0|0|278
+110|Ds|Darmstadio|10|7|10|metal|transition|0|0|281
+111|Rg|Roentgenio|11|7|11|metal|transition|0|0|282
+112|Cn|Copernicio|12|7|12|metal|transition|0|0|285
+113|Nh|Nihonio|13|7|13|metal|post|0|0|286
+114|Fl|Flerovio|14|7|14|metal|post|0|0|289
+115|Mc|Moscovio|15|7|15|metal|post|0|0|290
+116|Lv|Livermorio|16|7|16|metal|post|0|0|293
+117|Ts|Tennessine|17|7|17|nonmetal|halogen|0|0|294
+118|Og|Oganesson|18|7|18|nonmetal|noble|0|0|294
+`.trim();
+
+function parseData(raw){
+  return raw.split(/\n+/).map(line=>{
+    const [Z,sym,name,grp,per,col,macro,sub,frow,fcol,A]=line.split('|');
+    return { Z:+Z, sym, name, grp:+grp||null, per:+per, col:+col||null, macro, sub, frow:+frow||null, fcol:+fcol||null, A:+A||null };
+  });
+}
+const E = parseData(RAW);
+
+/* DOM refs */
+const gridTable = document.getElementById('gridTable');
+const f6 = document.getElementById('fgrid6');
+const f7 = document.getElementById('fgrid7');
+const modalBackdrop = document.getElementById('modalBackdrop');
+const cardSym = document.getElementById('cardSym');
+const cardTitle = document.getElementById('cardTitle');
+const cardZ = document.getElementById('cardZ');
+const cardCat = document.getElementById('cardCat');
+const chipGrp = document.getElementById('chipGrp');
+const chipPer = document.getElementById('chipPer');
+const chipSub = document.getElementById('chipSub');
+const chipCHONPS = document.getElementById('chipCHONPS');
+const cardClose = document.getElementById('cardClose');
+
+/* helpers */
+function macroClass(m){ return m==='metal'?'cat-metal':(m==='nonmetal'?'cat-nonmetal':'cat-metalloid'); }
+function subClass(s){
+  return {
+    alkali:'sub-alkali', alkaline:'sub-alkaline', transition:'sub-transition', post:'sub-post',
+    halogen:'sub-halogen', noble:'sub-noble', lanthanoid:'sub-lanthanoid', actinoid:'sub-actinoid',
+    nonmetal:'', metalloid:'', metal:''
+  }[s] || '';
+}
+function labelSub(s){
+  return {
+    alkali:'Metallo alcalino', alkaline:'Metallo alcalino-terroso', transition:'Metallo di transizione',
+    post:'Metallo post-transizione', halogen:'Alogeno', noble:'Gas nobile',
+    lanthanoid:'Lantanide', actinoid:'Attinide', nonmetal:'Non-metallo', metalloid:'Semimetallo', metal:'Metallo'
+  }[s] || s;
+}
+function labelMacro(m){ return m==='metal' ? 'Metallo' : (m==='nonmetal' ? 'Non-metallo' : 'Semimetallo'); }
+
+/* --------- RENDER con intestazioni --------- */
+function renderMainWithHeaders(){
+  gridTable.innerHTML='';
+  const corner = document.createElement('div'); corner.className='hdr'; gridTable.appendChild(corner);
+  for(let c=1;c<=18;c++){ const h=document.createElement('div'); h.className='hdr'; h.textContent = c; gridTable.appendChild(h); }
+
+  for(let row=1; row<=7; row++){
+    const lab = document.createElement('div'); lab.className='rowlab'; lab.textContent=row; gridTable.appendChild(lab);
+    for(let col=1; col<=18; col++){
+      const el = E.find(x=>x.per===row && x.col===col);
+      const d = document.createElement('div');
+      if(!el){ d.className='cell void'; gridTable.appendChild(d); continue; }
+      const tipDirClass = (row===1) ? 'tip-below' : '';
+      d.className = `cell ${macroClass(el.macro)} ${subClass(el.sub)} ${tipDirClass}`;
+      d.setAttribute('role','button'); d.setAttribute('tabindex','0');
+      d.setAttribute('aria-label', `${el.name}, Z ${el.Z}, A ${el.A}, ${labelSub(el.sub)}`);
+      d.dataset.sym = el.sym;
+      d.dataset.name = el.name;
+      d.dataset.z = String(el.Z);
+      d.dataset.a = String(el.A ?? '');
+      d.dataset.macro = el.macro;
+      d.dataset.sub = el.sub;
+      d.dataset.grp = String(el.grp ?? '');
+      d.dataset.per = String(el.per);
+
+      d.innerHTML = `
+        <div class="nuclideA">${el.A ?? ''}</div>
+        <div class="nuclideZ">${el.Z}</div>
+        <div class="sym">${el.sym}</div>
+      `;
+      gridTable.appendChild(d);
+    }
+  }
+}
+
+function renderFblock(){
+  f6.innerHTML=''; f7.innerHTML='';
+  const L = E.filter(x=>x.sub==='lanthanoid').sort((a,b)=>a.fcol-b.fcol);
+  const A = E.filter(x=>x.sub==='actinoid').sort((a,b)=>a.fcol-b.fcol);
+  for(let i=1;i<=14;i++){
+    const el = L.find(x=>x.fcol===i);
+    const d = document.createElement('div');
+    if(!el){ d.className='cell void'; f6.appendChild(d); } else{
+      d.className = `cell ${macroClass(el.macro)} ${subClass(el.sub)}`;
+      d.setAttribute('role','button'); d.setAttribute('tabindex','0');
+      d.dataset.sym = el.sym; d.dataset.name = el.name; d.dataset.z = String(el.Z); d.dataset.a = String(el.A ?? '');
+      d.dataset.macro = el.macro; d.dataset.sub = el.sub; d.dataset.grp = String(el.grp ?? ''); d.dataset.per = String(el.per);
+      d.innerHTML = `<div class="nuclideA">${el.A ?? ''}</div><div class="nuclideZ">${el.Z}</div><div class="sym">${el.sym}</div>`;
+      f6.appendChild(d);
+    }
+  }
+  for(let i=1;i<=14;i++){
+    const el = A.find(x=>x.fcol===i);
+    const d = document.createElement('div');
+    if(!el){ d.className='cell void'; f7.appendChild(d); } else{
+      d.className = `cell ${macroClass(el.macro)} ${subClass(el.sub)}`;
+      d.setAttribute('role','button'); d.setAttribute('tabindex','0');
+      d.dataset.sym = el.sym; d.dataset.name = el.name; d.dataset.z = String(el.Z); d.dataset.a = String(el.A ?? '');
+      d.dataset.macro = el.macro; d.dataset.sub = el.sub; d.dataset.grp = String(el.grp ?? ''); d.dataset.per = String(el.per);
+      d.innerHTML = `<div class="nuclideA">${el.A ?? ''}</div><div class="nuclideZ">${el.Z}</div><div class="sym">${el.sym}</div>`;
+      f7.appendChild(d);
+    }
+  }
+}
+
+renderMainWithHeaders(); renderFblock();
+
+/* ---- Ricerca + Filtri ---- */
+const q = document.getElementById('q');
+const category = document.getElementById('category');
+const onlyM = document.getElementById('onlyMetals');
+const onlyNM = document.getElementById('onlyNonMetals');
+const onlyMM = document.getElementById('onlyMetalloids');
+const btnClear = document.getElementById('btnClear');
+const btnCHONPS = document.getElementById('btnCHONPS');
+
+function applyFilters(){
+  const term = (q.value || '').trim().toLowerCase();
+  const sub = category.value;
+  const cells = Array.from(document.querySelectorAll('.cell')).filter(c=>!c.classList.contains('void'));
+  const metalMacros = new Set(['metal']);
+  const nonMetalMacros = new Set(['nonmetal']);
+  const metalloids = new Set(['metalloid']);
+  cells.forEach(c=>{
+    c.classList.remove('highlight');
+    const matchText = !term || c.dataset.sym.toLowerCase().includes(term) || c.dataset.name.toLowerCase().includes(term) || c.dataset.z === term;
+    let pass = matchText;
+    if(sub) pass = pass && (c.dataset.sub===sub);
+    if(onlyM.checked) pass = pass && metalMacros.has(c.dataset.macro);
+    if(onlyNM.checked) pass = pass && nonMetalMacros.has(c.dataset.macro);
+    if(onlyMM.checked) pass = pass && metalloids.has(c.dataset.macro);
+    c.classList.toggle('dim', !pass);
+  });
+}
+[q,category,onlyM,onlyNM,onlyMM].forEach(el=>el.addEventListener('input', applyFilters));
+btnClear.addEventListener('click', ()=>{
+  q.value=''; category.value=''; onlyM.checked=false; onlyNM.checked=false; onlyMM.checked=false;
+  document.querySelectorAll('.cell').forEach(c=>c.classList.remove('dim','highlight','selected'));
+  document.querySelectorAll('.legend .pill').forEach(p=>p.classList.remove('active'));
+});
+btnCHONPS.addEventListener('click', highlightCHONPS);
+function highlightCHONPS(){
+  // reset filters so CHONPS stands out anche se era attivo un filtro
+  if (typeof q !== 'undefined') q.value='';
+  if (typeof category !== 'undefined') category.value='';
+  if (typeof onlyM !== 'undefined') onlyM.checked=false;
+  if (typeof onlyNM !== 'undefined') onlyNM.checked=false;
+  if (typeof onlyMM !== 'undefined') onlyMM.checked=false;
+  document.querySelectorAll('.legend .pill').forEach(p=>p.classList.remove('active'));
+  // rimuovi attenuazioni
+  document.querySelectorAll('.cell').forEach(c=>c.classList.remove('dim'));
+  // evidenzia CHONPS
+  clearHighlights();
+  const need = new Set(['c','h','o','n','p','s']);
+  document.querySelectorAll('.cell').forEach(c=>{
+    if(need.has((c.dataset.sym||'').toLowerCase())) { c.classList.add('highlight'); }
+  });
+}
+function clearHighlights(){ document.querySelectorAll('.cell.highlight').forEach(c=>c.classList.remove('highlight')); }
+
+/* ---- Legenda cliccabile ---- */
+document.querySelectorAll('.legend .pill').forEach(pill=>{
+  pill.addEventListener('click', ()=>{
+    const wasActive = pill.classList.contains('active');
+    document.querySelectorAll('.legend .pill').forEach(p=>p.classList.remove('active'));
+    category.value=''; onlyM.checked=false; onlyNM.checked=false; onlyMM.checked=false;
+    if(wasActive){ applyFilters(); return; }
+    pill.classList.add('active');
+    const type = pill.dataset.type;
+    const value = pill.dataset.value;
+    if(type==='macro'){
+      if(value==='metal') onlyM.checked = true;
+      if(value==='nonmetal') onlyNM.checked = true;
+      if(value==='metalloid') onlyMM.checked = true;
+    }else if(type==='sub'){
+      category.value = value;
+    }
+    applyFilters();
+  });
+});
+
+/* -------- Event delegation: open modal -------- */
+let lastSelectedCell = null;
+gridTable.addEventListener('click',(ev)=>{
+  const cell=ev.target.closest('.cell'); if(!cell || cell.classList.contains('void')) return;
+  openCard(fromDataset(cell),cell);
+});
+f6.addEventListener('click',(ev)=>{
+  const cell=ev.target.closest('.cell'); if(!cell || cell.classList.contains('void')) return;
+  openCard(fromDataset(cell),cell);
+});
+f7.addEventListener('click',(ev)=>{
+  const cell=ev.target.closest('.cell'); if(!cell || cell.classList.contains('void')) return;
+  openCard(fromDataset(cell),cell);
+});
+function fromDataset(c){return{
+  Z:+c.dataset.z, sym:c.dataset.sym, name:c.dataset.name, grp:+c.dataset.grp||null, per:+c.dataset.per, sub:c.dataset.sub, A:+c.dataset.a||null,
+  macro: c.dataset.macro
+};}
+
+/* -------- Animazione atomica -------- */
+const SHELL_CAP = [2,8,18,32,32,18,8];
+function distributeElectrons(Z){
+  const shells=[]; let left=Z;
+  for(let i=0;i<SHELL_CAP.length;i++){const take=Math.min(left,SHELL_CAP[i]); shells.push(take); left-=take; if(left<=0) break;}
+  return shells;
+}
+function drawAtom(Z, N){
+  const shellsG = document.getElementById('shells');
+  const nucleusG = document.getElementById('nucleus');
+  shellsG.innerHTML=''; nucleusG.innerHTML='';
+  const cx=200, cy=200;
+  const totalCore=Math.max(1,Z+Math.max(0,N));
+  const coreRadius=Math.min(40, 10 + Math.sqrt(totalCore)*2.2);
+  const coreCount=Math.min(80,totalCore);
+  for(let i=0;i<coreCount;i++){
+    const angle = (i/coreCount) * Math.PI*2;
+    const r = coreRadius * Math.sqrt(Math.random()) * 0.9;
+    const x = cx + r * Math.cos(angle);
+    const y = cy + r * Math.sin(angle);
+    const isProton = i < Math.min(Z, coreCount);
+    const col = isProton ? '#ef4444' : '#6b7280';
+    const e = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    e.setAttribute('cx', x); e.setAttribute('cy', y); e.setAttribute('r', 3.6); e.setAttribute('fill', col); e.setAttribute('filter','url(#softGlow)');
+    nucleusG.appendChild(e);
+  }
+  const shells = distributeElectrons(Z);
+  const baseR = coreRadius + 24;
+  for(let i=0;i<shells.length;i++){
+    const count = shells[i]; const r = baseR + i*22;
+    const g = document.createElementNS('http://www.w3.org/2000/svg','g'); g.setAttribute('class','orbit spin'+((i%7)+1));
+    const ring = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    ring.setAttribute('cx',200); ring.setAttribute('cy',200); ring.setAttribute('r',r); ring.setAttribute('fill','none');
+    ring.setAttribute('stroke','rgba(255,255,255,.2)'); ring.setAttribute('stroke-width','1'); g.appendChild(ring);
+    for(let k=0;k<count;k++){
+      const th = (k/count)*Math.PI*2;
+      const ex = 200 + r*Math.cos(th); const ey = 200 + r*Math.sin(th);
+      const dot = document.createElementNS('http://www.w3.org/2000/svg','circle');
+      dot.setAttribute('cx',ex); dot.setAttribute('cy',ey); dot.setAttribute('r',4.2); dot.setAttribute('fill','#60a5fa'); dot.setAttribute('filter','url(#softGlow)');
+      g.appendChild(dot);
+    }
+    shellsG.appendChild(g);
+  }
+}
+
+/* ---- Modale ---- */
+function openCard(el, cellEl){
+  document.querySelectorAll('.cell').forEach(c=>c.classList.remove('selected'));
+  cellEl.classList.add('selected');
+  lastSelectedCell = cellEl;
+  cardSym.textContent = el.sym;
+  cardTitle.textContent = el.name;
+  cardZ.textContent = `Z ${el.Z}`;
+  cardCat.textContent = `Categoria: ${labelMacro(el.macro)} (${labelSub(el.sub)})`;
+  chipGrp.textContent = `Gruppo ${el.grp ?? '—'}`;
+  chipPer.textContent = `Periodo ${el.per}`;
+  chipSub.textContent = labelSub(el.sub);
+  chipCHONPS.style.display = (new Set(['C','H','O','N','P','S']).has(el.sym)) ? 'inline-block' : 'none';
+  const N = (el.A ?? 0) - el.Z;
+
+  // Notes
+  const ul=document.getElementById('cardNotes');
+  ul.innerHTML = [
+    `Il numero atomico <strong>Z=${el.Z}</strong> identifica l’elemento.`,
+    `Numero di massa tipico <strong>A=${el.A ?? '—'}</strong> (didattico).`,
+    `Posizione: gruppo <strong>${el.grp ?? '—'}</strong>, periodo <strong>${el.per}</strong>.`
+  ].map(x=>`<li>${x}</li>`).join('');
+
+  // Counts
+  document.getElementById('pCount').textContent = el.Z;
+  document.getElementById('eCount').textContent = el.Z;
+  document.getElementById('nCount').textContent = isNaN(N) ? '—' : N;
+
+  drawAtom(el.Z, N);
+
+  modalBackdrop.classList.add('show');
+  modalBackdrop.setAttribute('aria-hidden','false');
+  try { cellEl.scrollIntoView({block:'center', inline:'center', behavior:'smooth'}); } catch(e){}
+}
+function closeCard(){ modalBackdrop.classList.remove('show'); modalBackdrop.setAttribute('aria-hidden','true'); }
+cardClose.addEventListener('click', closeCard);
+modalBackdrop.addEventListener('click', (e)=>{ if(e.target===modalBackdrop) closeCard(); });
+document.addEventListener('keydown', (ev)=>{ if(ev.key==='Escape') closeCard(); });
+
+// Buttons in card
+document.getElementById('cardCHONPS').addEventListener('click', highlightCHONPS);
+document.getElementById('cardFocusCell').addEventListener('click', ()=>{
+  if(lastSelectedCell){
+    try { lastSelectedCell.scrollIntoView({block:'center', inline:'center', behavior:'smooth'}); } catch(e){}
+    lastSelectedCell.focus({preventScroll:true});
+  }
+});
+
+/* ---- Adattamento alle dimensioni ---- */
+function fitGrids(){
+  const wrap = gridTable.parentElement.closest('.gridWrap');
+  const wrapW = wrap.clientWidth - 1;
+  const cols = 19;
+  const gap = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--gap')) || 6;
+  let cellW = Math.floor((wrapW - gap*(cols-1) - (0.8)) / 18);
+  cellW = Math.max(42, Math.min(100, cellW));
+  const cellH = Math.round(cellW * 1.08);
+  document.documentElement.style.setProperty('--cellW', cellW + 'px');
+  document.documentElement.style.setProperty('--cellH', cellH + 'px');
+  document.documentElement.style.setProperty('--gap', Math.max(4, Math.min(10, Math.round(cellW/12))) + 'px');
+}
+window.addEventListener('resize', fitGrids);
+window.addEventListener('DOMContentLoaded', fitGrids);
+fitGrids();
+</script>
+</body>
+</html>
