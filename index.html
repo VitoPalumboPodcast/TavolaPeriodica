@@ -21,9 +21,6 @@ header{position:sticky;top:0;z-index:10;background:linear-gradient(180deg,#fff,r
 .hero{display:flex;gap:1.5rem;align-items:center;justify-content:space-between;background:var(--hero-gradient);border:1px solid rgba(16,42,67,.08);border-radius:18px;padding:1.4rem 1.6rem;margin-top:.75rem}
 .hero h1{margin:0;font-size:2rem}
 .hero p{margin:.35rem 0 1rem 0;color:var(--muted);max-width:680px}
-.variants{display:flex;flex-wrap:wrap;gap:.6rem}
-.variants a{display:inline-flex;align-items:center;gap:.45rem;padding:.45rem .75rem;border-radius:999px;background:#fff;border:1px solid rgba(16,42,67,.12);color:var(--accent-2);font-size:.9rem;text-decoration:none;transition:transform .1s ease, box-shadow .2s ease}
-.variants a:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(31,111,235,.15)}
 .toolbar{display:flex;flex-wrap:wrap;gap:.75rem;align-items:center;justify-content:space-between}
 .controls{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center}
 .controls input[type="search"]{padding:.65rem .8rem;border:1px solid var(--border);border-radius:10px;background:#fff;min-width:260px}
@@ -129,7 +126,7 @@ footer.modalbar{grid-column:1/-1;display:flex;justify-content:space-between;alig
       <div>
         <h1>Tavola Periodica interattiva</h1>
         <p>Una sola pagina che sintetizza filtri avanzati, integrazione dei dati online, finestre di dettaglio con tutte le proprietà e l’animazione del modello atomico.</p>
-        <p class="smallnote" style="margin:0;color:var(--muted)">Questa versione raccoglie tutte le funzionalità principali direttamente nella pagina, con dati completi disponibili anche offline.</p>
+        <p class="smallnote" style="margin:0;color:var(--muted)">Tutto in un’unica esperienza offline: funzioni interattive, dati completi e modale di dettaglio sono subito disponibili senza rete.</p>
       </div>
     </div>
   </div>
@@ -203,7 +200,7 @@ footer.modalbar{grid-column:1/-1;display:flex;justify-content:space-between;alig
         <span class="chip"><span class="sw" style="background:var(--attinide)"></span> Attinidi</span>
         <span class="chip"><span class="sw" style="background:var(--chonps)"></span> CHONPS</span>
       </div>
-      <p class="smallnote">I dati vengono integrati automaticamente dal dataset pubblico (Kelvin per T). In caso di blocco CORS, usa il pulsante "Aggiorna dati".</p>
+      <p class="smallnote">I dati completi sono caricati localmente all’avvio. Usa "Aggiorna dati" solo se vuoi sincronizzare manualmente con il dataset pubblico.</p>
       <div class="controls fetchStatus" style="margin-top:.5rem">
         <button class="btn" id="btnFetch">Aggiorna dati</button>
         <span id="fetchStatus" class="smallnote" aria-live="polite"></span>
@@ -362,7 +359,9 @@ const ELEMENTS=[
 ];
 
 /* ===== Base properties (offline dataset) ===== */
-if(window.STATIC_ELEMENT_PROPS){
+if(typeof window.seedElementProps==='function'){
+  window.seedElementProps(ELEMENTS);
+}else if(window.STATIC_ELEMENT_PROPS){
   ELEMENTS.forEach(el=>{
     const base=window.STATIC_ELEMENT_PROPS[el.Z];
     if(base){
@@ -696,7 +695,7 @@ document.addEventListener('keydown',(ev)=>{
  */
 const statusEl=document.getElementById('fetchStatus');
 if(statusEl){
-  statusEl.textContent="Dati locali pronti. Aggiorna per importare eventuali aggiornamenti online.";
+  statusEl.textContent="Dati offline già caricati. Aggiorna manualmente per sincronizzare con la fonte online.";
 }
 async function fetchAndMerge(){
   const url="https://raw.githubusercontent.com/Bowserinator/Periodic-Table-JSON/master/periodic-table.json";

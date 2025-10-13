@@ -2008,4 +2008,14 @@
     }
   };
   global.STATIC_ELEMENT_PROPS = DATA;
+  global.seedElementProps = function(elements){
+    if(!Array.isArray(elements)) return;
+    elements.forEach(function(el){
+      if(!el || typeof el !== 'object') return;
+      const base = DATA[el.Z];
+      if(base){
+        el.props = Object.assign({}, base);
+      }
+    });
+  };
 })(typeof window !== 'undefined' ? window : globalThis);
