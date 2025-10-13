@@ -32,12 +32,16 @@ header{position:sticky;top:0;z-index:10;background:linear-gradient(180deg,#fff,r
 .btn[aria-pressed="true"]{background:var(--accent);border-color:transparent;color:#fff}
 select, .filters fieldset{padding:.45rem .6rem;border:1px solid var(--border);border-radius:10px;background:#fff}
 .filters{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center}
-.alphaControls{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.65rem;margin-top:1rem}
-.alphaControls label{display:flex;flex-direction:column;gap:.4rem;padding:.75rem;border:1px solid var(--border);border-radius:14px;background:#fff;box-shadow:0 4px 12px rgba(16,42,67,.05)}
-.alphaControls label span{display:flex;justify-content:space-between;align-items:center;font-size:.85rem;color:var(--muted)}
-.alphaControls input[type="range"]{accent-color:var(--accent);width:100%}
-.alphaControls .value{font-variant-numeric:tabular-nums;color:var(--ink);font-weight:600}
-.alphaActions{display:flex;justify-content:flex-end;margin-top:.5rem}
+.alphaControls{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:.65rem;margin-top:1rem}
+.alphaControls label{display:flex;align-items:center;gap:.6rem;padding:.75rem;border:1px solid var(--border);border-radius:14px;background:#fff;box-shadow:0 4px 12px rgba(16,42,67,.05);cursor:pointer;transition:box-shadow .2s ease, border-color .2s ease, background .2s ease, opacity .2s ease}
+.alphaControls label:hover{box-shadow:0 10px 24px rgba(16,42,67,.08)}
+.alphaControls label.off{opacity:.5;background:#f8fafc}
+.alphaControls input[type="checkbox"]{appearance:none;width:18px;height:18px;border-radius:6px;border:2px solid var(--border);display:grid;place-items:center;transition:all .15s ease}
+.alphaControls input[type="checkbox"]::after{content:"";width:8px;height:8px;border-radius:2px;background:transparent;transition:background .15s ease}
+.alphaControls input[type="checkbox"]:checked{border-color:var(--accent);background:rgba(43,138,62,.12)}
+.alphaControls input[type="checkbox"]:checked::after{background:var(--accent)}
+.alphaControls span{font-size:.92rem;color:var(--ink);font-weight:600}
+.alphaActions{display:flex;justify-content:flex-end;margin-top:.5rem;gap:.5rem}
 .legend{display:flex;flex-wrap:wrap;gap:.4rem .6rem}
 .legend .chip{display:inline-flex;align-items:center;gap:.4rem;font-size:.8rem;padding:.2rem .5rem;border-radius:999px;border:1px solid var(--border);background:#fff}
 .legend .sw{width:14px;height:14px;border-radius:4px;border:1px solid var(--border)}
@@ -165,20 +169,20 @@ footer.modalbar{grid-column:1/-1;display:flex;justify-content:space-between;alig
         </fieldset>
       </div>
     </div>
-    <div class="alphaControls" aria-label="Regola l'opacità dei gruppi">
-      <label><span><strong>Alcalini</strong><span class="value" id="alphaLabel-alcalino">100%</span></span><input type="range" min="10" max="100" value="100" step="5" data-cat="alcalino"/></label>
-      <label><span><strong>Alcalino-terrosi</strong><span class="value" id="alphaLabel-alcalino-terroso">100%</span></span><input type="range" min="10" max="100" value="100" step="5" data-cat="alcalino-terroso"/></label>
-      <label><span><strong>Transizione</strong><span class="value" id="alphaLabel-transizione">100%</span></span><input type="range" min="10" max="100" value="100" step="5" data-cat="transizione"/></label>
-      <label><span><strong>Post-transizione</strong><span class="value" id="alphaLabel-post">100%</span></span><input type="range" min="10" max="100" value="100" step="5" data-cat="post"/></label>
-      <label><span><strong>Semimetalli</strong><span class="value" id="alphaLabel-semimetallo">100%</span></span><input type="range" min="10" max="100" value="100" step="5" data-cat="semimetallo"/></label>
-      <label><span><strong>Non-metalli</strong><span class="value" id="alphaLabel-nonmetallo">100%</span></span><input type="range" min="10" max="100" value="100" step="5" data-cat="nonmetallo"/></label>
-      <label><span><strong>Alogeni</strong><span class="value" id="alphaLabel-alogeno">100%</span></span><input type="range" min="10" max="100" value="100" step="5" data-cat="alogeno"/></label>
-      <label><span><strong>Gas nobili</strong><span class="value" id="alphaLabel-nobile">100%</span></span><input type="range" min="10" max="100" value="100" step="5" data-cat="nobile"/></label>
-      <label><span><strong>Lantanidi</strong><span class="value" id="alphaLabel-lantanide">100%</span></span><input type="range" min="10" max="100" value="100" step="5" data-cat="lantanide"/></label>
-      <label><span><strong>Attinidi</strong><span class="value" id="alphaLabel-attinide">100%</span></span><input type="range" min="10" max="100" value="100" step="5" data-cat="attinide"/></label>
+    <div class="alphaControls" aria-label="Attiva o attenua le aree della tavola">
+      <label><input type="checkbox" data-cat="alcalino" checked/><span>Alcalini</span></label>
+      <label><input type="checkbox" data-cat="alcalino-terroso" checked/><span>Alcalino-terrosi</span></label>
+      <label><input type="checkbox" data-cat="transizione" checked/><span>Transizione</span></label>
+      <label><input type="checkbox" data-cat="post" checked/><span>Post-transizione</span></label>
+      <label><input type="checkbox" data-cat="semimetallo" checked/><span>Semimetalli</span></label>
+      <label><input type="checkbox" data-cat="nonmetallo" checked/><span>Non-metalli</span></label>
+      <label><input type="checkbox" data-cat="alogeno" checked/><span>Alogeni</span></label>
+      <label><input type="checkbox" data-cat="nobile" checked/><span>Gas nobili</span></label>
+      <label><input type="checkbox" data-cat="lantanide" checked/><span>Lantanidi</span></label>
+      <label><input type="checkbox" data-cat="attinide" checked/><span>Attinidi</span></label>
     </div>
     <div class="alphaActions">
-      <button class="btn" id="btnAlphaReset">Reimposta opacità</button>
+      <button class="btn" id="btnAlphaReset">Attiva tutte le aree</button>
     </div>
   </div>
   <div class="container">
@@ -390,27 +394,30 @@ function render(){
 }
 render();
 
-/* ===== Opacità per gruppi ===== */
-const alphaInputs=document.querySelectorAll('.alphaControls input[type="range"]');
+/* ===== Visibilità per gruppi ===== */
+const alphaToggles=document.querySelectorAll('.alphaControls input[type="checkbox"]');
 const btnAlphaReset=document.getElementById('btnAlphaReset');
-function applyAlphaInput(input){
-  const cat=input.dataset.cat;
+const ALPHA_OFF=.18;
+function applyAlphaToggle(toggle){
+  const cat=toggle.dataset.cat;
   if(!cat) return;
-  const raw=Number(input.value)||100;
-  const clamped=Math.min(100,Math.max(10,raw));
-  if(clamped!==raw) input.value=String(clamped);
-  const normalized=(clamped/100).toFixed(2);
-  document.documentElement.style.setProperty(`--alpha-${cat}`, normalized);
-  const label=document.getElementById(`alphaLabel-${cat}`);
-  if(label) label.textContent=`${clamped}%`;
+  const value=toggle.checked?1:ALPHA_OFF;
+  document.documentElement.style.setProperty(`--alpha-${cat}`, String(value));
+  const wrapper=toggle.closest('label');
+  if(wrapper){
+    wrapper.classList.toggle('off', !toggle.checked);
+  }
 }
-alphaInputs.forEach(inp=>{
-  applyAlphaInput(inp);
-  inp.addEventListener('input',()=>applyAlphaInput(inp));
+alphaToggles.forEach(toggle=>{
+  applyAlphaToggle(toggle);
+  toggle.addEventListener('change',()=>applyAlphaToggle(toggle));
 });
 if(btnAlphaReset){
   btnAlphaReset.addEventListener('click',()=>{
-    alphaInputs.forEach(inp=>{inp.value='100'; applyAlphaInput(inp);});
+    alphaToggles.forEach(toggle=>{
+      toggle.checked=true;
+      applyAlphaToggle(toggle);
+    });
   });
 }
 
