@@ -121,11 +121,7 @@ footer.modalbar{grid-column:1/-1;display:flex;justify-content:space-between;alig
       <div>
         <h1>Tavola Periodica interattiva</h1>
         <p>Una sola pagina che sintetizza filtri avanzati, integrazione dei dati online, finestre di dettaglio con tutte le proprietà e l’animazione del modello atomico.</p>
-        <nav class="variants" aria-label="Altre versioni specializzate">
-          <a href="tavola_periodica_interattiva_118_dati_online.html">🔗 Dati online completi</a>
-          <a href="tavola_periodica_animazione_atomo_full_fix_chonps.html">🔗 Modale con animazione</a>
-          <a href="tavola_periodica_import_export.html">🔗 Import / Export</a>
-        </nav>
+        <p class="smallnote" style="margin:0;color:var(--muted)">Questa versione raccoglie tutte le funzionalità principali direttamente nella pagina, con dati completi disponibili anche offline.</p>
       </div>
     </div>
   </div>
@@ -281,6 +277,7 @@ footer.modalbar{grid-column:1/-1;display:flex;justify-content:space-between;alig
   </article>
 </section>
 
+<script src="element-props.js"></script>
 <script>
 /* ===== Core dataset 118 (structure only; props filled via web dataset) ===== */
 const E=(Z,sym,name,period,group,block,category,chonps=false)=>({Z,sym,name,period,group,block,category,chonps,props:{}});
@@ -353,6 +350,16 @@ const ELEMENTS=[
   E(116,'Lv','Livermorio',7,16,'p','post'), E(117,'Ts','Tennesso',7,17,'p','alogeno'),
   E(118,'Og','Oganesson',7,18,'p','nobile')
 ];
+
+/* ===== Base properties (offline dataset) ===== */
+if(window.STATIC_ELEMENT_PROPS){
+  ELEMENTS.forEach(el=>{
+    const base=window.STATIC_ELEMENT_PROPS[el.Z];
+    if(base){
+      el.props={...base};
+    }
+  });
+}
 
 /* ===== Layout mapping ===== */
 const grid=document.getElementById('grid');
@@ -631,9 +638,14 @@ document.addEventListener('keydown',(ev)=>{
  * Temperatures in Kelvin; density g/L for gases, g/cm³ for solids/liquids.
  */
 const statusEl=document.getElementById('fetchStatus');
+if(statusEl){
+  statusEl.textContent="Dati locali pronti. Aggiorna per importare eventuali aggiornamenti online.";
+}
 async function fetchAndMerge(){
   const url="https://raw.githubusercontent.com/Bowserinator/Periodic-Table-JSON/master/periodic-table.json";
-  statusEl.textContent="Caricamento dati elementi…";
+  if(statusEl){
+    statusEl.textContent="Caricamento dati elementi…";
+  }
   try{
     const res=await fetch(url,{cache:'no-store'});
     if(!res.ok) throw new Error(res.status+" "+res.statusText);
@@ -658,17 +670,22 @@ async function fetchAndMerge(){
       p.discovered_by=src.discovered_by || src.named_by;
       // attempt covalent radius if present in shells? (Bowserinator may not include); leave undefined
     }
-    statusEl.textContent="Dati integrati ✔";
+    if(statusEl){
+      statusEl.textContent="Dati aggiornati dal dataset pubblico ✔";
+    }
     // brief celebratory animation on updated cells
     document.getElementById('btnAnim').click();
   }catch(err){
     console.error(err);
-    statusEl.textContent="Impossibile caricare (CORS o rete). Prova da server HTTPS o scarica e collega il JSON in locale.";
+    if(statusEl){
+      statusEl.textContent="Impossibile aggiornare (CORS o rete). I dati locali restano disponibili.";
+    }
   }
 }
-document.getElementById('btnFetch').addEventListener('click', fetchAndMerge);
-// Auto-fetch on load
-fetchAndMerge();
+const btnFetch=document.getElementById('btnFetch');
+if(btnFetch){
+  btnFetch.addEventListener('click', fetchAndMerge);
+}
 
 /* Initial filters */
 applyFilters();
