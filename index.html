@@ -21,6 +21,11 @@ header{position:sticky;top:0;z-index:10;background:linear-gradient(180deg,#fff,r
 .hero{display:flex;gap:1.5rem;align-items:center;justify-content:space-between;background:var(--hero-gradient);border:1px solid rgba(16,42,67,.08);border-radius:18px;padding:1.4rem 1.6rem;margin-top:.75rem}
 .hero h1{margin:0;font-size:2rem}
 .hero p{margin:.35rem 0 1rem 0;color:var(--muted);max-width:680px}
+.updateNote{margin-top:1rem;padding:1rem 1.1rem;border-radius:14px;border:1px solid rgba(16,42,67,.08);background:#fff;box-shadow:0 8px 24px rgba(16,42,67,.08);max-width:680px}
+.updateNote .badge{display:inline-flex;align-items:center;gap:.35rem;font-size:.78rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--accent);background:rgba(43,138,62,.12);padding:.25rem .55rem;border-radius:999px}
+.updateNote ul{margin:.6rem 0 0 0;padding-left:1.1rem;color:var(--muted);font-size:.9rem;line-height:1.45}
+.updateNote li{margin-bottom:.35rem}
+.updateNote li:last-child{margin-bottom:0}
 .toolbar{display:flex;flex-wrap:wrap;gap:.75rem;align-items:center;justify-content:space-between}
 .controls{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center}
 .controls input[type="search"]{padding:.65rem .8rem;border:1px solid var(--border);border-radius:10px;background:#fff;min-width:260px}
@@ -127,6 +132,14 @@ footer.modalbar{grid-column:1/-1;display:flex;justify-content:space-between;alig
         <h1>Tavola Periodica interattiva</h1>
         <p>Una sola pagina che sintetizza filtri avanzati, integrazione dei dati online, finestre di dettaglio con tutte le proprietà e l’animazione del modello atomico.</p>
         <p class="smallnote" style="margin:0;color:var(--muted)">Tutto in un’unica esperienza offline: funzioni interattive, dati completi e modale di dettaglio sono subito disponibili senza rete.</p>
+        <div class="updateNote" aria-live="polite">
+          <span class="badge">Novità recenti</span>
+          <ul>
+            <li>Controllo dell’opacità per ogni famiglia: attiva o attenua le aree con i nuovi switch in evidenza.</li>
+            <li>Modale unificata con animazione atomica, pulsante CHONPS e focus sull’elemento selezionato.</li>
+            <li>Aggiornamento manuale dei dati da Bowserinator: il pulsante “Aggiorna dati” sincronizza masse e configurazioni.</li>
+          </ul>
+        </div>
       </div>
     </div>
   </div>
