@@ -19,9 +19,16 @@
 }
 *{box-sizing:border-box}
 body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;color:var(--ink);background:var(--bg)}
-header{position:sticky;top:0;z-index:10;background:linear-gradient(180deg,#fff,rgba(255,255,255,.85));backdrop-filter:saturate(1.1) blur(6px);box-shadow:0 2px 12px rgba(0,0,0,.06)}
+header{position:sticky;top:0;z-index:10;background:linear-gradient(180deg,#fff,rgba(255,255,255,.85));backdrop-filter:saturate(1.1) blur(6px);box-shadow:0 2px 12px rgba(0,0,0,.06);transition:box-shadow .3s ease}
+header.collapsed{box-shadow:0 1px 6px rgba(0,0,0,.05)}
 .container{max-width:1280px;margin:0 auto;padding:1rem}
-.hero{display:flex;gap:1.5rem;align-items:center;justify-content:space-between;background:var(--hero-gradient);border:1px solid rgba(16,42,67,.08);border-radius:18px;padding:1.4rem 1.6rem;margin-top:.75rem}
+.heroWrapper{display:flex;flex-direction:column;gap:.75rem}
+.heroHeader{display:flex;justify-content:flex-end;align-items:center}
+.heroToggle{font-size:.85rem;line-height:1.2}
+.hero{display:flex;flex-direction:column;gap:1.2rem;align-items:flex-start;justify-content:space-between;background:var(--hero-gradient);border:1px solid rgba(16,42,67,.08);border-radius:18px;padding:1.4rem 1.6rem;margin-top:.75rem;max-height:1000px;overflow:hidden;transition:max-height .35s ease, padding .3s ease, margin .3s ease, opacity .3s ease, border-color .3s ease, background .3s ease}
+.heroContent{display:flex;flex-direction:column;gap:1rem;width:100%}
+header.collapsed .hero{max-height:0;padding:0;margin-top:0;border-color:transparent;opacity:0;pointer-events:none;background:transparent}
+header.collapsed .heroWrapper{gap:.35rem}
 .hero h1{margin:0;font-size:2rem}
 .hero p{margin:.35rem 0 1rem 0;color:var(--muted);max-width:680px}
 .updateNote{margin-top:1rem;padding:1rem 1.1rem;border-radius:14px;border:1px solid rgba(16,42,67,.08);background:#fff;box-shadow:0 8px 24px rgba(16,42,67,.08);max-width:680px}
@@ -117,6 +124,8 @@ aside.note{grid-column:1/-1;border:1px dashed var(--border);background:#fff;padd
 .modal .close{margin-left:auto;border:none;background:#efefef;border-radius:999px;padding:.45rem .65rem;cursor:pointer}
 footer.modalbar{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:.9rem}
 @media (max-width:700px){.modal{grid-template-columns:1fr}.kv{grid-template-columns:1fr}}
+.heroHeader{gap:.4rem}
+@media (max-width:700px){.heroHeader{justify-content:flex-start;align-items:stretch}.heroToggle{width:100%}}
 .summary{max-width:1280px;margin:2rem auto 0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem}
 .summary article{background:#fff;border:1px solid var(--border);border-radius:16px;padding:1rem 1.1rem;box-shadow:0 10px 32px rgba(16,42,67,.08)}
 .summary h2{margin:0 0 .35rem 0;font-size:1.05rem}
@@ -129,9 +138,12 @@ footer.modalbar{grid-column:1/-1;display:flex;justify-content:space-between;alig
 </head>
 <body id="top">
 <header>
-  <div class="container">
-    <div class="hero">
-      <div>
+  <div class="container heroWrapper">
+    <div class="heroHeader">
+      <button class="btn heroToggle" id="toggleHero" type="button" aria-pressed="false" aria-expanded="true" aria-controls="heroPanel">Riduci introduzione</button>
+    </div>
+    <div class="hero" id="heroPanel">
+      <div class="heroContent">
         <h1>Tavola Periodica interattiva</h1>
         <p>Una sola pagina che sintetizza filtri avanzati, integrazione dei dati online, finestre di dettaglio con tutte le proprietà e l’animazione del modello atomico.</p>
         <p class="smallnote" style="margin:0;color:var(--muted)">Tutto in un’unica esperienza offline: funzioni interattive, dati completi e modale di dettaglio sono subito disponibili senza rete.</p>
@@ -392,6 +404,44 @@ if(typeof window.seedElementProps==='function'){
       el.props={...base};
     }
   });
+}
+
+/* ===== Hero collapse controls ===== */
+const headerEl=document.querySelector('header');
+const heroToggle=document.getElementById('toggleHero');
+const heroPanel=document.getElementById('heroPanel');
+let heroUserCollapsed=false;
+
+function setHeroCollapsed(state,{fromScroll=false}={}){
+  if(!headerEl || !heroToggle){
+    return;
+  }
+  headerEl.classList.toggle('collapsed',state);
+  heroToggle.setAttribute('aria-pressed',state?'true':'false');
+  heroToggle.setAttribute('aria-expanded',state?'false':'true');
+  heroToggle.textContent=state?'Espandi introduzione':'Riduci introduzione';
+  if(heroPanel){
+    heroPanel.setAttribute('aria-hidden',state?'true':'false');
+  }
+  if(!fromScroll){
+    heroUserCollapsed=state;
+  }
+}
+
+if(headerEl && heroToggle){
+  setHeroCollapsed(false,{fromScroll:true});
+  heroToggle.addEventListener('click',()=>{
+    setHeroCollapsed(!headerEl.classList.contains('collapsed'));
+  });
+  window.addEventListener('scroll',()=>{
+    if(heroUserCollapsed){
+      return;
+    }
+    const shouldCollapse=window.scrollY>120;
+    if(shouldCollapse!==headerEl.classList.contains('collapsed')){
+      setHeroCollapsed(shouldCollapse,{fromScroll:true});
+    }
+  },{passive:true});
 }
 
 /* ===== Layout mapping ===== */
