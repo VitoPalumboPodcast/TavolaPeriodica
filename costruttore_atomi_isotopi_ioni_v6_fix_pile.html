@@ -1,0 +1,413 @@
+<!DOCTYPE html> 
+<html lang="it">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Costruttore di Atomi – Isotopi & Ioni (v6 • fix pile)</title>
+<style>
+  :root{
+    --bg:#0b1320; --panel:#111827; --ink:#e5e7eb; --muted:#9ca3af;
+    --accent:#38bdf8; --proton:#ef4444; --neutron:#a78bfa; --electron:#22c55e;
+    --good:#10b981; --warn:#f59e0b; --bad:#ef4444; --info:#60a5fa;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0; font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+    background:radial-gradient(1200px 600px at 70% -10%,#12213a 0%, #0b1320 45%, #0b1320 100%);
+    color:var(--ink); display:flex; flex-direction:column;
+  }
+  header{
+    padding:12px 16px; display:flex; gap:12px; align-items:center; flex-wrap:wrap;
+    background:linear-gradient(180deg,#0e172a 0%, #0b1320 100%); border-bottom:1px solid #1f2937;
+  }
+  header h1{font-size:18px; margin:0; letter-spacing:.2px}
+  .chip{display:inline-flex; align-items:center; gap:8px; padding:6px 10px; border-radius:999px; font-size:12px; background:#0f172a; border:1px solid #1f2937;}
+  .chip b{font-weight:700}
+  .wrap{flex:1; display:grid; grid-template-columns: 1fr 420px; gap:16px; padding:16px; min-height:0}
+  @media (max-width: 1000px){ .wrap{grid-template-columns:1fr} }
+
+  /* ATOM SCENE */
+  .scene{
+    position:relative; background:#0b1220; border:1px solid #1f2937; border-radius:16px;
+    overflow:hidden; min-height:660px; display:flex; align-items:center; justify-content:center;
+    box-shadow:0 10px 30px rgba(0,0,0,.25), inset 0 0 60px rgba(56,189,248,.06);
+  }
+  .atom{ position:relative; width:min(82vmin,800px); height:min(82vmin,800px); z-index:10; }
+  .nucleus{
+    position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+    width:188px; height:188px; border-radius:50%;
+    background:radial-gradient(circle at 30% 30%, #1f2937 0%, #0f172a 65%, #0b1320 100%);
+    border:1px solid #334155; box-shadow:0 0 40px rgba(167,139,250,.25), inset 0 0 30px rgba(56,189,248,.12);
+    display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:6px; padding:8px;
+  }
+  .np{ width:20px; height:20px; border-radius:50%; box-shadow:0 2px 6px rgba(0,0,0,.4), inset 0 0 8px rgba(255,255,255,.15); }
+  .np.proton{ background:radial-gradient(circle at 35% 35%, #ff9b9b, var(--proton)); border:1px solid #991b1b }
+  .np.neutron{ background:radial-gradient(circle at 35% 35%, #d7cbff, var(--neutron)); border:1px solid #5b21b6 }
+
+  /* Central big symbols */
+  .elSymbol{
+    position:absolute; left:50%; top:46%; transform:translate(-50%,-50%);
+    font-weight:800; letter-spacing:.5px; pointer-events:none; user-select:none;
+    color:rgba(255,255,255,.10); text-shadow:0 0 30px rgba(56,189,248,.18);
+  }
+  .isoSymbol{
+    position:absolute; left:50%; top:63%; transform:translate(-50%,-50%);
+    font-weight:800; letter-spacing:.5px; pointer-events:none; user-select:none;
+    color:rgba(255,255,255,.10); text-shadow:0 0 20px rgba(56,189,248,.16);
+  }
+
+  /* Bottom info */
+  .bottomInfo{
+    position:absolute; left:50%; bottom:12px; transform:translateX(-50%);
+    display:flex; flex-direction:column; align-items:center; gap:6px; pointer-events:none; user-select:none;
+    text-align:center; z-index:9;
+  }
+  .elNameBg{
+    font-weight:800; letter-spacing:.5px; color:rgba(255,255,255,.10); line-height:1; white-space:nowrap;
+  }
+  .isoNameBg{
+    font-weight:700; color:rgba(255,255,255,.85); background:rgba(2,6,23,.55);
+    border:1px solid #1f2a44; border-radius:10px; padding:6px 10px; display:inline-flex; align-items:center; gap:8px;
+    box-shadow:0 6px 20px rgba(0,0,0,.35), inset 0 0 20px rgba(56,189,248,.06);
+  }
+  .statusBig{
+    position:relative;
+    display:inline-flex; align-items:center; gap:10px; padding:8px 14px; border-radius:999px;
+    font-weight:800; background:#0b1220; border:1px solid #1f2937; text-transform:uppercase;
+    box-shadow:0 10px 24px rgba(0,0,0,.35);
+  }
+  .statusBig .dot{width:12px; height:12px; border-radius:50%}
+  .sb-stable{ color:#d1fae5; }
+  .sb-stable .dot{ background:var(--good) }
+  .sb-radio{ color:#fff7ed; text-shadow:0 0 12px rgba(245,158,11,.55); }
+  .sb-radio .dot{ background:var(--warn) }
+  .sb-unstable{ color:#fecaca; }
+  .sb-unstable .dot{ background:var(--bad) }
+  .sb-est{ color:#bfdbfe; }
+  .sb-est .dot{ background:var(--info) }
+  .sb-radio::before, .sb-radio::after{
+    content:""; position:absolute; inset:-8px; border-radius:999px;
+    border:2px solid rgba(245,158,11,.45); filter:blur(2px);
+    animation:spin 6s linear infinite;
+  }
+  .sb-radio::after{ inset:-16px; border-color:rgba(245,158,11,.25); animation-direction:reverse; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+
+  /* SHELLS and electrons */
+  .shell{
+    position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+    border:1px dashed rgba(148,163,184,.3); border-radius:50%; pointer-events:none;
+    box-shadow:0 0 30px rgba(56,189,248,.08) inset;
+  }
+  .orbit{ position:absolute; left:50%; top:50%; transform-origin:0 0; animation:spin-orbit var(--spd,14s) linear infinite; }
+  .e{
+    position:absolute; width:14px; height:14px; border-radius:50%;
+    background:radial-gradient(circle at 30% 30%, #a7f3d0, var(--electron));
+    border:1px solid #065f46; box-shadow:0 0 12px rgba(34,197,94,.65);
+  }
+  @keyframes spin-orbit { to { transform:rotate(360deg); } }
+
+  /* SIDE PANEL */
+  .side{ min-height:0; background:var(--panel); border:1px solid #1f2937; border-radius:16px; padding:12px; display:flex; flex-direction:column; gap:12px; box-shadow:0 10px 30px rgba(0,0,0,.25); }
+  .card{ background:#0f172a; border:1px solid #1f2937; border-radius:12px; padding:12px; }
+  .title{font-weight:700; letter-spacing:.2px; margin-bottom:8px}
+  .row{display:flex; align-items:center; justify-content:space-between; gap:8px; margin:6px 0}
+  .row code{font-size:13px; color:#cbd5e1}
+  .row b{font-size:14px}
+  .btn{ background:#0ea5e9; border:1px solid #0284c7; color:white; padding:8px 10px; border-radius:10px; font-weight:600; cursor:pointer; }
+  .btn.secondary{ background:#1f2937; border-color:#374151; color:#e5e7eb }
+  .grid2{display:grid; grid-template-columns:repeat(2,1fr); gap:8px}
+  .note{font-size:12px; color:var(--muted)}
+  .badges{ display:flex; gap:8px; flex-wrap:wrap; margin-top:4px }
+  .badge{ display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px; font-size:12px; border:1px solid #334155; background:#0b1220 }
+  .badge .dot{ width:10px; height:10px; border-radius:50% }
+  .b-stable .dot{ background:var(--good) }
+  .b-radio .dot{ background:var(--warn) }
+  .b-unstable .dot{ background:var(--bad) }
+  .b-est .dot{ background:var(--info) }
+
+  .infoArea{
+    background:linear-gradient(180deg, rgba(2,6,23,.7), rgba(2,6,23,.55));
+    border:1px solid #1f2937; border-radius:12px; padding:12px;
+    box-shadow:0 8px 24px rgba(0,0,0,.35);
+    font-size:14px; color:#e5e7eb;
+  }
+  .infoArea h3{ margin:6px 0 8px; font-size:15px }
+  .infoArea p{ margin:8px 0; color:#cbd5e1 }
+  .infoArea .small{ font-size:12px; color:#9ca3af }
+
+  /* Piles (fixed z-index and clearer dots) */
+  .pile{
+    position:absolute; display:flex; flex-direction:column; align-items:center; gap:8px;
+    background:rgba(15,23,42,.75); border:1px solid #1f2937; padding:10px; border-radius:12px;
+    box-shadow:0 10px 20px rgba(0,0,0,.35);
+    z-index:40;
+  }
+  .pile h4{margin:0; font-size:12px; color:#e5e7eb}
+  .pileStack{ position:relative; width:64px; height:64px; border-radius:10px; background:rgba(2,6,23,.6); border:1px dashed #334155; }
+  .pileDot{ position:absolute; width:16px; height:16px; border-radius:50%; border:1px solid rgba(0,0,0,.45);
+            box-shadow:0 0 8px rgba(255,255,255,.25), inset 0 0 6px rgba(255,255,255,.15); }
+  .pile .dragSrc{ width:64px; height:28px; border-radius:999px; display:flex; align-items:center; justify-content:center;
+    background:#0f172a; border:1px dashed #5b6b8a; color:#e5e7eb; font-size:12px; cursor:grab; user-select:none;
+  }
+
+  /* Drop hint behind piles */
+  .drop-hint{position:absolute; inset:0; border-radius:16px; outline:2px dashed rgba(56,189,248,.35); outline-offset:-10px; display:none; z-index:5}
+  .scene.dragging .drop-hint{display:block}
+
+  /* Flying particles */
+  .fly{
+    position:fixed; z-index:9999; width:14px; height:14px; border-radius:50%;
+    pointer-events:none; opacity:0.95; box-shadow:0 0 12px rgba(255,255,255,.55);
+    transition:transform .6s cubic-bezier(.22,.8,.2,1), opacity .6s;
+  }
+  .fly.proton{ background:radial-gradient(circle at 35% 35%, #ff9b9b, var(--proton)); border:1px solid #991b1b }
+  .fly.neutron{ background:radial-gradient(circle at 35% 35%, #d7cbff, var(--neutron)); border:1px solid #5b21b6 }
+  .fly.electron{ background:radial-gradient(circle at 30% 30%, #a7f3d0, var(--electron)); border:1px solid #065f46 }
+</style>
+</head>
+<body>
+  <header>
+    <h1>Costruttore di Atomi – Isotopi & Ioni</h1>
+    <span class="chip" id="chipEl"><b>H</b>&nbsp;Idrogeno • Z=1</span>
+    <span class="chip" id="chipIso">Isotopo: <b>¹H</b></span>
+    <span class="chip"><b>Regola</b>: Z = #protoni → identità elemento</span>
+  </header>
+
+  <div class="wrap">
+    <section class="scene" id="scene">
+      <div class="drop-hint"></div>
+
+      <!-- Piles -->
+      <div class="pile" id="pileP" style="left:16px; bottom:16px;">
+        <h4>Protoni</h4>
+        <div class="pileStack" aria-hidden="true">
+          <div class="pileDot" style="left:8px; top:36px; background:var(--proton)"></div>
+          <div class="pileDot" style="left:22px; top:22px; background:var(--proton)"></div>
+          <div class="pileDot" style="left:38px; top:10px; background:var(--proton)"></div>
+          <div class="pileDot" style="left:14px; top:8px; background:var(--proton)"></div>
+        </div>
+        <div class="dragSrc" draggable="true" data-type="proton">Trascina p⁺</div>
+      </div>
+
+      <div class="pile" id="pileN" style="right:16px; bottom:16px;">
+        <h4>Neutroni</h4>
+        <div class="pileStack" aria-hidden="true">
+          <div class="pileDot" style="left:8px; top:36px; background:var(--neutron)"></div>
+          <div class="pileDot" style="left:22px; top:22px; background:var(--neutron)"></div>
+          <div class="pileDot" style="left:38px; top:10px; background:var(--neutron)"></div>
+          <div class="pileDot" style="left:14px; top:8px; background:var(--neutron)"></div>
+        </div>
+        <div class="dragSrc" draggable="true" data-type="neutron">Trascina n⁰</div>
+      </div>
+
+      <div class="pile" id="pileE" style="left:50%; transform:translateX(-50%); top:16px;">
+        <h4>Elettroni</h4>
+        <div class="pileStack" aria-hidden="true">
+          <div class="pileDot" style="left:8px; top:36px; background:var(--electron)"></div>
+          <div class="pileDot" style="left:22px; top:22px; background:var(--electron)"></div>
+          <div class="pileDot" style="left:38px; top:10px; background:var(--electron)"></div>
+          <div class="pileDot" style="left:14px; top:8px; background:var(--electron)"></div>
+        </div>
+        <div class="dragSrc" draggable="true" data-type="electron">Trascina e⁻</div>
+      </div>
+
+      <div class="atom" id="atom">
+        <div class="nucleus" id="nucleus" aria-label="Nucleo (trascina qui protoni e neutroni)"></div>
+        <div class="elSymbol" id="elSymbol">H</div>
+        <div class="isoSymbol" id="isoSymbol">¹H</div>
+
+        <!-- Bottom central info -->
+        <div class="bottomInfo" id="bottomInfo">
+          <div class="elNameBg" id="elNameBg">Idrogeno</div>
+          <div class="isoNameBg" id="isoNameBg">Isotopo: ¹H · “Prozio”</div>
+          <div class="statusBig sb-stable" id="statusBig"><span class="dot"></span><span id="statusText">Stabile (verificato) ✅</span></div>
+        </div>
+      </div>
+    </section>
+
+    <aside class="side">
+      <div class="card">
+        <div class="title">Stato attuale</div>
+        <div class="row"><code>Elemento</code><b id="elName">Idrogeno (H)</b></div>
+        <div class="row"><code>Isotopo</code><b id="isoName">¹H · “Prozio”</b></div>
+        <div class="row"><code>Z (protoni)</code><b id="zVal">1</b></div>
+        <div class="row"><code>Neutroni (N)</code><b id="nVal">0</b></div>
+        <div class="row"><code>Elettroni (e⁻)</code><b id="eVal">1</b></div>
+        <div class="row"><code>Massa A = Z+N</code><b id="aVal">1</b></div>
+        <div class="row"><code>Carica (Z−e⁻)</code><b id="chargeVal">0</b></div>
+        <div class="row"><code>Config. (Aufbau ≈)</code><b id="configVal">1s¹</b></div>
+        <div class="row"><code>Guscio esterno</code><b id="valenceVal">1/2</b></div>
+        <div class="badges" id="badges"></div>
+      </div>
+
+      <div class="card infoArea" id="infoArea">
+        <h3>Spiegazione scientifica</h3>
+        <div id="infoText"></div>
+        <p class="small">Nota: il modello elettronico è didattico (gusci tipo Bohr, configurazione Aufbau semplificata).</p>
+      </div>
+
+      <div class="card">
+        <div class="title">Azioni rapide</div>
+        <div class="grid2">
+          <button class="btn" id="btnPrevEl">⟵ Elemento</button>
+          <button class="btn" id="btnNextEl">Elemento ⟶</button>
+        </div>
+        <div style="margin-top:8px">
+          <button class="btn secondary" id="btnReset">Reset (H)</button>
+        </div>
+        <p class="note">Trascina p⁺/n⁰ nel nucleo, e⁻ nell’orbita. Aggiungendo un p⁺ cambiano elemento e isotopo; l’app evidenzia in grande <strong>isotopo</strong> e <strong>radioattività</strong>.</p>
+      </div>
+    </aside>
+  </div>
+
+<script>
+/* === Dati e logica: identici alla v5, con flyFromPile che prende correttamente la sorgente === */
+const ELEMENTS={1:{sym:"H",name:"Idrogeno"},2:{sym:"He",name:"Elio"},3:{sym:"Li",name:"Litio"},4:{sym:"Be",name:"Berillio"},5:{sym:"B",name:"Boro"},6:{sym:"C",name:"Carbonio"},7:{sym:"N",name:"Azoto"},8:{sym:"O",name:"Ossigeno"},9:{sym:"F",name:"Fluoro"},10:{sym:"Ne",name:"Neon"},11:{sym:"Na",name:"Sodio"},12:{sym:"Mg",name:"Magnesio"},13:{sym:"Al",name:"Alluminio"},14:{sym:"Si",name:"Silicio"},15:{sym:"P",name:"Fosforo"},16:{sym:"S",name:"Zolfo"},17:{sym:"Cl",name:"Cloro"},18:{sym:"Ar",name:"Argon"},19:{sym:"K",name:"Potassio"},20:{sym:"Ca",name:"Calcio"},21:{sym:"Sc",name:"Scandio"},22:{sym:"Ti",name:"Titanio"},23:{sym:"V",name:"Vanadio"},24:{sym:"Cr",name:"Cromo"},25:{sym:"Mn",name:"Manganese"},26:{sym:"Fe",name:"Ferro"},27:{sym:"Co",name:"Cobalto"},28:{sym:"Ni",name:"Nichel"},29:{sym:"Cu",name:"Rame"},30:{sym:"Zn",name:"Zinco"},31:{sym:"Ga",name:"Gallio"},32:{sym:"Ge",name:"Germanio"},33:{sym:"As",name:"Arsenico"},34:{sym:"Se",name:"Selenio"},35:{sym:"Br",name:"Bromo"},36:{sym:"Kr",name:"Kripton"},37:{sym:"Rb",name:"Rubidio"},38:{sym:"Sr",name:"Stronzio"},39:{sym:"Y",name:"Ittrio"},40:{sym:"Zr",name:"Zirconio"},41:{sym:"Nb",name:"Niobio"},42:{sym:"Mo",name:"Molibdeno"},43:{sym:"Tc",name:"Tecnezio"},44:{sym:"Ru",name:"Rutenio"},45:{sym:"Rh",name:"Rodio"},46:{sym:"Pd",name:"Palladio"},47:{sym:"Ag",name:"Argento"},48:{sym:"Cd",name:"Cadmio"},49:{sym:"In",name:"Indio"},50:{sym:"Sn",name:"Stagno"},51:{sym:"Sb",name:"Antimonio"},52:{sym:"Te",name:"Tellurio"},53:{sym:"I",name:"Iodio"},54:{sym:"Xe",name:"Xeno"},55:{sym:"Cs",name:"Cesio"},56:{sym:"Ba",name:"Bario"},57:{sym:"La",name:"Lantanio"},58:{sym:"Ce",name:"Cerio"},59:{sym:"Pr",name:"Praseodimio"},60:{sym:"Nd",name:"Neodimio"},61:{sym:"Pm",name:"Promezio"},62:{sym:"Sm",name:"Samario"},63:{sym:"Eu",name:"Europio"},64:{sym:"Gd",name:"Gadolinio"},65:{sym:"Tb",name:"Terbio"},66:{sym:"Dy",name:"Disprosio"},67:{sym:"Ho",name:"Olmio"},68:{sym:"Er",name:"Erbio"},69:{sym:"Tm",name:"Tulio"},70:{sym:"Yb",name:"Itterbio"},71:{sym:"Lu",name:"Lutezio"},72:{sym:"Hf",name:"Afnio"},73:{sym:"Ta",name:"Tantalio"},74:{sym:"W",name:"Tungsteno"},75:{sym:"Re",name:"Renio"},76:{sym:"Os",name:"Osmio"},77:{sym:"Ir",name:"Iridio"},78:{sym:"Pt",name:"Platino"},79:{sym:"Au",name:"Oro"},80:{sym:"Hg",name:"Mercurio"},81:{sym:"Tl",name:"Tallio"},82:{sym:"Pb",name:"Piombo"},83:{sym:"Bi",name:"Bismuto"},84:{sym:"Po",name:"Polonio"},85:{sym:"At",name:"Astato"},86:{sym:"Rn",name:"Radon"},87:{sym:"Fr",name:"Francio"},88:{sym:"Ra",name:"Radio"},89:{sym:"Ac",name:"Attinio"},90:{sym:"Th",name:"Torio"},91:{sym:"Pa",name:"Protoattinio"},92:{sym:"U",name:"Uranio"},93:{sym:"Np",name:"Nettunio"},94:{sym:"Pu",name:"Plutonio"},95:{sym:"Am",name:"Americio"},96:{sym:"Cm",name:"Curio"},97:{sym:"Bk",name:"Berkelio"},98:{sym:"Cf",name:"Californio"},99:{sym:"Es",name:"Einsteinio"},100:{sym:"Fm",name:"Fermio"},101:{sym:"Md",name:"Mendelevio"},102:{sym:"No",name:"Nobelio"},103:{sym:"Lr",name:"Laurenzio"},104:{sym:"Rf",name:"Rutherfordio"},105:{sym:"Db",name:"Dubnio"},106:{sym:"Sg",name:"Seaborgio"},107:{sym:"Bh",name:"Bohrio"},108:{sym:"Hs",name:"Hassio"},109:{sym:"Mt",name:"Meitnerio"},110:{sym:"Ds",name:"Darmstadtio"},111:{sym:"Rg",name:"Roentgenio"},112:{sym:"Cn",name:"Copernicio"},113:{sym:"Nh",name:"Nihonio"},114:{sym:"Fl",name:"Flerovio"},115:{sym:"Mc",name:"Moscovio"},116:{sym:"Lv",name:"Livermorio"},117:{sym:"Ts",name:"Tennessine"},118:{sym:"Og",name:"Oganesson"}};
+const ISOTOPE_NAMES={"1:1":"Prozio","1:2":"Deuterio","1:3":"Trizio"};
+const SHELL_CAPS=[2,8,18,32,32,18,8];
+const SUBSHELL_ORDER=["1s","2s","2p","3s","3p","4s","3d","4p","5s","4d","5p","6s","4f","5d","6p","7s","5f","6d","7p"];
+const SUBSHELL_CAP={s:2,p:6,d:10,f:14};
+const KNOWN_ISOTOPES={1:{1:"stable",2:"stable",3:"radioattivo"},2:{3:"stable",4:"stable"},6:{12:"stable",13:"stable",14:"radioattivo"},8:{16:"stable",17:"stable",18:"stable"},26:{56:"stable"},82:{206:"stable",207:"stable",208:"stable"},83:{209:"radioattivo"}};
+
+let state={Z:1,N:0,e:1};
+const $=s=>document.querySelector(s);
+const scene=$("#scene"), atomEl=$("#atom"), nucleusEl=$("#nucleus"), elSymbolEl=$("#elSymbol"), isoSymbolEl=$("#isoSymbol");
+const elNameBgEl=$("#elNameBg"), isoNameBgEl=$("#isoNameBg"), statusBigEl=$("#statusBig"), statusTextEl=$("#statusText");
+
+function clamp(v,min,max){return Math.max(min,Math.min(max,v));}
+function currentEl(){return ELEMENTS[state.Z]||ELEMENTS[1];}
+function charge(){return state.Z-state.e;}
+function toSup(n){const map={'1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹','0':'⁰'};return String(n).split('').map(c=>map[c]||c).join('');}
+function isotopeKey(Z,A){return `${Z}:${A}`;}
+function isotopeCommonName(Z,A){const key=isotopeKey(Z,A);return ISOTOPE_NAMES[key]||`${(ELEMENTS[Z]||{}).name||''}-${A}`.trim();}
+function formatIsotopeShort(Z,A){const sym=(ELEMENTS[Z]||{}).sym||"?";return `${toSup(A)}${sym}`;}
+function recommendNforZ(Z){if(Z<=20)return Z; if(Z<=40)return Math.round(Z*1.1); if(Z<=60)return Math.round(Z*1.25); if(Z<=80)return Math.round(Z*1.35); if(Z<=100)return Math.round(Z*1.45); return Math.round(Z*1.5);}
+function toleranceForZ(Z){if(Z<=8)return 1; if(Z<=20)return 2; if(Z<=40)return 4; if(Z<=82)return 6; return 8;}
+function isotopeStatus(Z,N){const A=Z+N, known=KNOWN_ISOTOPES[Z]; if(known&&known[A]){return known[A]==="stable"?{kind:"stable",label:"Stabile (verificato) ✅"}:{kind:"radioattivo",label:"Radioattivo ☢️"};} const rec=recommendNforZ(Z), tol=toleranceForZ(Z); if(Math.abs(N-rec)<=tol){return {kind:"estimate",label:"Zona di stabilità (stima) 🔷"};} return {kind:"unstable",label:"Instabile / non legato 🔴"};}
+function electronShells(e){const shells=[];let r=e;for(const cap of SHELL_CAPS){const t=Math.min(cap,r);shells.push(t);r-=t;if(r<=0)break;} if(shells.length===0)shells.push(0);return shells;}
+function electronConfig(e){let left=e,out=[];for(const sub of SUBSHELL_ORDER){if(left<=0)break;const type=sub.slice(-1),cap=SUBSHELL_CAP[type],fill=Math.min(cap,left);out.push(sub+toSup(fill));left-=fill;} if(left>0)out.push("…");return out.join(" ");}
+function valence(e){const shells=electronShells(e);const outer=shells[shells.length-1]||0;const cap=SHELL_CAPS[shells.length-1]||2;return {outer,cap};}
+function scoreNeutrality(){const ch=Math.abs(charge());return ch===0?1:Math.max(0,1-Math.min(1,ch/3));}
+function scoreStability(){const rec=recommendNforZ(state.Z);const diff=Math.abs(state.N-rec);const span=Math.max(2,Math.round(rec*0.15));return Math.max(0,Math.min(1,1-(diff/span)));}
+function scoreValence(){const v=valence(state.e);if(v.cap===0)return 0;if(v.outer===0||v.outer===v.cap)return 1;return v.outer/v.cap;}
+function setBar(el,val){el.style.width=`${Math.round(val*100)}%`;el.className='bar '+(val>0.8?'ok':val>0.5?'warn':'bad');}
+
+function explain(Z,N,e){const A=Z+N, el=ELEMENTS[Z], sym=el?.sym||"?";const nz=(N/(Z||1)).toFixed(2);const q=Z-e;const st=isotopeStatus(Z,N).kind;let lines=[];lines.push(`<b>Hai ottenuto il nuclide ${toSup(A)}${sym}</b> (${el?.name||"?"}, A = Z+N = ${A}; Z=${Z}, N=${N}).`); if(q!==0){lines.push(`Elettronicamente è un <b>${q>0?`catione (+${q})`:`anione (${q})`}</b>; il <i>nuclide</i> però resta ${toSup(A)}${sym}.`);} else {lines.push(`L’atomo è <b>neutro</b>: e⁻ = Z = ${Z}.`);} const rec=recommendNforZ(Z);const tol=toleranceForZ(Z);const neutronRich=N>rec+tol;const neutronPoor=N<rec-tol;const veryHeavy=Z>=84; if(st==="stable"){lines.push(`Isotopo <b>stabile</b>, N/Z ≈ <b>${nz}</b> in valle di stabilità.`);} else if(st==="radioattivo"){let mode=neutronRich?"β⁻ (n → p + e⁻ + ν̄ₑ)":(neutronPoor?"β⁺/cattura elettronica (p → n)":(veryHeavy?"α (emissione di ⁴He)":"β"));lines.push(`Isotopo <b>radioattivo</b>: decadimento tipico <b>${mode}</b> verso nuclidi più stabili.`);} else if(st==="unstable"){let mech=Z===1&&N>=2?"emissione di neutroni (non legato)":(neutronRich?"β⁻ o emissione di n":(veryHeavy?"α o fissione spontanea":"β"));lines.push(`Configurazione <b>instabile/non legata</b>: lontana dalla valle di stabilità. Attesa <b>${mech}</b>.`);} else {lines.push(`<b>Stima didattica</b>: vicino alla valle di stabilità (non conferma sperimentale).`);} if(neutronRich){lines.push(`Eccesso di neutroni: il nucleo tende a ridurre N/Z.`);} else if(neutronPoor){lines.push(`Deficit di neutroni: il nucleo tende ad aumentare N/Z.`);} if(veryHeavy){lines.push(`Per Z ≥ 84, la repulsione coulombiana favorisce α e talvolta fissione spontanea.`);} return `<p>${lines.join("</p><p>")}</p>`;}
+
+function render(){
+  const el=currentEl(); const A=state.Z+state.N; const isoShort=formatIsotopeShort(state.Z,A); const isoCommon=isotopeCommonName(state.Z,A);
+  $("#elName").textContent=`${el.name} (${el.sym})`; $("#isoName").textContent=`${isoShort} · “${isoCommon}”`;
+  $("#zVal").textContent=state.Z; $("#nVal").textContent=state.N; $("#eVal").textContent=state.e; $("#aVal").textContent=A;
+  const ch=charge(); $("#chargeVal").textContent=ch>0?`+${ch}`:`${ch}`; $("#configVal").textContent=electronConfig(state.e);
+  const v=valence(state.e); $("#valenceVal").textContent=`${v.outer}/${v.cap}`;
+  $("#chipEl").innerHTML=`<b>${el.sym}</b>&nbsp;${el.name} • Z=${state.Z}`; $("#chipIso").innerHTML=`Isotopo: <b>${isoShort}</b>`;
+
+  const box=atomEl.getBoundingClientRect(); const size=Math.max(80,Math.min(220,Math.round(Math.min(box.width,box.height)*0.24)));
+  elSymbolEl.style.fontSize=size+"px"; elSymbolEl.textContent=el.sym;
+  const isoSize=Math.round(size*0.58); isoSymbolEl.style.fontSize=isoSize+"px"; isoSymbolEl.textContent=isoShort;
+
+  const sceneBox=$("#scene").getBoundingClientRect(); const nameSize=Math.max(28,Math.min(72,Math.round(sceneBox.width*0.07)));
+  elNameBgEl.style.fontSize=nameSize+"px"; elNameBgEl.textContent=el.name; $("#isoNameBg").innerHTML=`Isotopo: <b>${isoShort}</b>&nbsp;·&nbsp;“${isoCommon}”`;
+
+  nucleusEl.innerHTML=''; for(let i=0;i<state.Z;i++){const d=document.createElement('div'); d.className='np proton'; nucleusEl.appendChild(d);} for(let i=0;i<state.N;i++){const d=document.createElement('div'); d.className='np neutron'; nucleusEl.appendChild(d);}
+
+  atomEl.querySelectorAll('.shell,.orbit').forEach(n=>n.remove());
+  const shells=electronShells(state.e); const nucleusR=94, startR=nucleusR+44;
+  shells.forEach((count,idx)=>{const radius=startR+idx*44; const shell=document.createElement('div'); shell.className='shell'; shell.style.width=shell.style.height=`${radius*2}px`; atomEl.appendChild(shell);
+    for(let i=0;i<count;i++){const theta=(i/count)*Math.PI*2; const orbit=document.createElement('div'); orbit.className='orbit'; orbit.style.setProperty('--spd',`${12+idx*3+(i%3)}s`); orbit.style.left='50%'; orbit.style.top='50%'; orbit.style.transform=`rotate(${theta*180/Math.PI}deg)`;
+      const e=document.createElement('div'); e.className='e'; e.style.left=`${radius}px`; e.style.top='0px'; orbit.appendChild(e); atomEl.appendChild(orbit);} });
+
+  updateStatusBadges();
+  $("#infoText").innerHTML=explain(state.Z,state.N,state.e);
+  setBar($("#barCharge"),scoreNeutrality()); setBar($("#barStability"),scoreStability()); setBar($("#barValence"),scoreValence());
+}
+
+function updateStatusBadges(){
+  const st=isotopeStatus(state.Z,state.N);
+  $("#statusText").textContent=st.label;
+  $("#statusBig").className='statusBig '+(st.kind==="stable"?'sb-stable':st.kind==="radioattivo"?'sb-radio':st.kind==="unstable"?'sb-unstable':'sb-est');
+  const holder=$("#badges"); holder.innerHTML="";
+  const b1=document.createElement('span'); b1.className='badge '+(st.kind==="stable"?"b-stable":st.kind==="radioattivo"?"b-radio":st.kind==="unstable"?"b-unstable":"b-est"); b1.innerHTML=`<span class="dot"></span>${st.label}`; holder.appendChild(b1);
+  const q=charge(); const ion=q===0?"Neutro":(q>0?`Catione (+${q})`:`Anione (${q})`);
+  const b2=document.createElement('span'); b2.className='badge'; b2.innerHTML=`<span class="dot" style="background:${q===0?'var(--good)':q>0?'var(--warn)':'var(--info)'}"></span>${ion}`; holder.appendChild(b2);
+}
+
+function setZ(newZ,{auto=true}={}){const z=clamp(newZ,1,118); state.Z=z; if(auto){state.e=Math.max(0,z); state.N=Math.max(0,recommendNforZ(z));} render();}
+function add(type,k=1){ if(type==='proton'){setZ(state.Z+k,{auto:true}); return;} if(type==='neutron'){state.N=Math.max(0,state.N+k); render(); return;} if(type==='electron'){state.e=Math.max(0,state.e+k); render(); return;} }
+function sub(type,k=1){ if(type==='proton'){setZ(state.Z-k,{auto:true}); return;} if(type==='neutron'){state.N=Math.max(0,state.N-k); render(); return;} if(type==='electron'){state.e=Math.max(0,state.e-k); render(); return;} }
+
+let draggingType=null, draggingSrcEl=null;
+function setupPiles(){
+  document.querySelectorAll('.dragSrc').forEach(el=>{
+    el.addEventListener('dragstart', ev=>{
+      draggingType=el.dataset.type; draggingSrcEl=el;
+      scene.classList.add('dragging');
+      ev.dataTransfer.setData('text/plain', draggingType);
+    });
+    el.addEventListener('dragend', ()=>{
+      scene.classList.remove('dragging'); draggingType=null; draggingSrcEl=null;
+    });
+  });
+
+  nucleusEl.addEventListener('dragover', ev=>ev.preventDefault());
+  nucleusEl.addEventListener('drop', ev=>{
+    ev.preventDefault();
+    const t=draggingType||ev.dataTransfer.getData('text/plain'); if(!t) return;
+    if(t==='proton'||t==='neutron'){
+      flyFromPile(t, nucleusCenter(), {duration:600, source: draggingSrcEl});
+      if(t==='proton'){
+        state.Z=clamp(state.Z+1,1,118);
+        flyFromPile('electron', atomCenter(), {duration:1500});
+        state.e=state.e+1;
+        const rec=recommendNforZ(state.Z);
+        if(rec>state.N){ flyFromPile('neutron', nucleusCenter(), {duration:1500}); state.N+=1; }
+        else if(rec<state.N){ state.N=Math.max(0,state.N-1); }
+        render();
+      }else{
+        state.N=state.N+1; render();
+      }
+    }
+    scene.classList.remove('dragging'); draggingType=null; draggingSrcEl=null;
+  });
+
+  scene.addEventListener('dragover', ev=>ev.preventDefault());
+  scene.addEventListener('drop', ev=>{
+    ev.preventDefault();
+    const t=draggingType||ev.dataTransfer.getData('text/plain'); if(!t) return;
+    if(t==='electron'){
+      flyFromPile('electron', atomCenter(), {duration:600, source: draggingSrcEl});
+      state.e=state.e+1; render();
+    }
+    scene.classList.remove('dragging'); draggingType=null; draggingSrcEl=null;
+  });
+}
+
+function atomCenter(){const r=atomEl.getBoundingClientRect(); return {x:r.left+r.width/2, y:r.top+r.height/2};}
+function nucleusCenter(){const r=nucleusEl.getBoundingClientRect(); return {x:r.left+r.width/2, y:r.top+r.height/2};}
+
+function flyFromPile(type,to,opts={}){
+  const {duration=600, source=null}=opts;
+  try{
+    const src = source || document.querySelector(`.dragSrc[data-type="${type}"]`);
+    const r = src.getBoundingClientRect();
+    const start={x:r.left+r.width/2,y:r.top+r.height/2};
+    const dot=document.createElement('div'); dot.className=`fly ${type}`;
+    dot.style.transform=`translate(${start.x-7}px, ${start.y-7}px)`;
+    dot.style.transition=`transform ${duration}ms cubic-bezier(.22,.8,.2,1), opacity ${duration}ms`;
+    document.body.appendChild(dot);
+    requestAnimationFrame(()=>{ dot.style.transform=`translate(${to.x-7}px, ${to.y-7}px)`; dot.style.opacity='0.2'; setTimeout(()=>dot.remove(), duration+100); });
+  }catch(e){ /* silent */ }
+}
+
+document.getElementById('btnPrevEl').onclick=()=>setZ(state.Z-1,{auto:true});
+document.getElementById('btnNextEl').onclick=()=>setZ(state.Z+1,{auto:true});
+document.getElementById('btnReset').onclick=()=>{ state={Z:1,N:0,e:1}; render(); };
+
+setupPiles();
+render();
+window.addEventListener('resize', render);
+</script>
+</body>
+</html>
