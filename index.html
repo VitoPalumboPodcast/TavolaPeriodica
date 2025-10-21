@@ -22,14 +22,14 @@ body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-s
 header{position:relative;z-index:10;background:linear-gradient(180deg,#fff,rgba(255,255,255,.85));backdrop-filter:saturate(1.1) blur(6px);box-shadow:0 2px 12px rgba(0,0,0,.06);transition:box-shadow .3s ease}
 header.sticky{position:sticky;top:0}
 header.collapsed{box-shadow:0 1px 6px rgba(0,0,0,.05)}
-.container{max-width:1280px;margin:0 auto;padding:1rem}
-.heroWrapper{display:flex;flex-direction:column;gap:.75rem}
-.heroHeader{display:flex;justify-content:flex-end;align-items:center}
-.heroToggle{font-size:.85rem;line-height:1.2}
-.hero{display:flex;flex-direction:column;gap:1.2rem;align-items:flex-start;justify-content:space-between;background:var(--hero-gradient);border:1px solid rgba(16,42,67,.08);border-radius:18px;padding:1.4rem 1.6rem;margin-top:.75rem;max-height:1000px;overflow:hidden;transition:max-height .35s ease, padding .3s ease, margin .3s ease, opacity .3s ease, border-color .3s ease, background .3s ease}
+.container{max-width:1280px;margin:0 auto;padding:.75rem 1rem}
+.heroWrapper{display:flex;flex-direction:column;gap:.5rem}
+.heroHeader{display:flex;justify-content:space-between;align-items:center}
+.heroToggle{font-size:.8rem;line-height:1.2;padding:.45rem .75rem}
+.hero{display:flex;flex-direction:column;gap:1rem;align-items:flex-start;justify-content:space-between;background:var(--hero-gradient);border:1px solid rgba(16,42,67,.08);border-radius:16px;padding:1.15rem 1.25rem;margin-top:.5rem;max-height:960px;overflow:hidden;transition:max-height .35s ease, padding .3s ease, margin .3s ease, opacity .3s ease, border-color .3s ease, background .3s ease}
 .heroContent{display:flex;flex-direction:column;gap:1rem;width:100%}
 header.collapsed .hero{max-height:0;padding:0;margin-top:0;border-color:transparent;opacity:0;pointer-events:none;background:transparent}
-header.collapsed .heroWrapper{gap:.35rem}
+header.collapsed .heroWrapper{gap:.2rem}
 .hero h1{margin:0;font-size:2rem}
 .hero p{margin:.35rem 0 1rem 0;color:var(--muted);max-width:680px}
 .updateNote{margin-top:1rem;padding:1rem 1.1rem;border-radius:14px;border:1px solid rgba(16,42,67,.08);background:#fff;box-shadow:0 8px 24px rgba(16,42,67,.08);max-width:680px}
@@ -37,16 +37,16 @@ header.collapsed .heroWrapper{gap:.35rem}
 .updateNote ul{margin:.6rem 0 0 0;padding-left:1.1rem;color:var(--muted);font-size:.9rem;line-height:1.45}
 .updateNote li{margin-bottom:.35rem}
 .updateNote li:last-child{margin-bottom:0}
-.toolbar{display:flex;flex-wrap:wrap;gap:.75rem;align-items:center;justify-content:space-between}
-.controls{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center}
+.toolbar{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;justify-content:space-between}
+.controls{display:flex;flex-wrap:wrap;gap:.45rem;align-items:center}
 .controls input[type="search"]{padding:.65rem .8rem;border:1px solid var(--border);border-radius:10px;background:#fff;min-width:260px}
 .btn{padding:.6rem .9rem;border:1px solid var(--border);border-radius:10px;background:#fff;color:var(--ink);cursor:pointer;transition:transform .05s ease, box-shadow .2s ease, background .2s ease}
 .btn:hover{box-shadow:var(--shadow)}
 .btn[aria-pressed="true"]{background:var(--accent);border-color:transparent;color:#fff}
-select, .filters fieldset{padding:.45rem .6rem;border:1px solid var(--border);border-radius:10px;background:#fff}
-.filters{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center}
-.alphaControls{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:.65rem;margin-top:1rem}
-.alphaControls label{display:flex;align-items:center;gap:.6rem;padding:.75rem;border:1px solid var(--border);border-radius:14px;background:#fff;box-shadow:0 4px 12px rgba(16,42,67,.05);cursor:pointer;transition:box-shadow .2s ease, border-color .2s ease, background .2s ease, opacity .2s ease}
+select{padding:.45rem .6rem;border:1px solid var(--border);border-radius:10px;background:#fff}
+.filters{display:flex;flex-wrap:wrap;gap:.45rem;align-items:center}
+.alphaControls{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:.6rem;margin-top:.75rem}
+.alphaControls label{display:flex;align-items:center;gap:.6rem;padding:.65rem;border:1px solid var(--border);border-radius:14px;background:#fff;box-shadow:0 4px 12px rgba(16,42,67,.05);cursor:pointer;transition:box-shadow .2s ease, border-color .2s ease, background .2s ease, opacity .2s ease}
 .alphaControls label:hover{box-shadow:0 10px 24px rgba(16,42,67,.08)}
 .alphaControls label.off{opacity:.5;background:#f8fafc}
 .alphaControls input[type="checkbox"]{appearance:none;width:18px;height:18px;border-radius:6px;border:2px solid var(--border);display:grid;place-items:center;transition:all .15s ease}
@@ -54,10 +54,17 @@ select, .filters fieldset{padding:.45rem .6rem;border:1px solid var(--border);bo
 .alphaControls input[type="checkbox"]:checked{border-color:var(--accent);background:rgba(43,138,62,.12)}
 .alphaControls input[type="checkbox"]:checked::after{background:var(--accent)}
 .alphaControls span{font-size:.92rem;color:var(--ink);font-weight:600}
-.alphaActions{display:flex;justify-content:flex-end;margin-top:.5rem;gap:.5rem}
-.legend{display:flex;flex-wrap:wrap;gap:.4rem .6rem}
-.legend .chip{display:inline-flex;align-items:center;gap:.4rem;font-size:.8rem;padding:.2rem .5rem;border-radius:999px;border:1px solid var(--border);background:#fff}
-.legend .sw{width:14px;height:14px;border-radius:4px;border:1px solid var(--border)}
+.alphaActions{display:flex;justify-content:flex-end;margin-top:.35rem;gap:.5rem}
+.legend{display:flex;flex-wrap:wrap;gap:.35rem .55rem}
+.legendRow{display:flex;flex-wrap:wrap;gap:.75rem 1rem;align-items:flex-start;justify-content:space-between}
+.legendCol{flex:1 1 520px;min-width:260px}
+.legendNote{margin-top:.3rem}
+.legendRow .fetchStatus{gap:.45rem;align-self:center;flex-wrap:nowrap}
+.legendRow .fetchStatus .btn{padding:.55rem .85rem}
+.legendRow .fetchStatus .smallnote{margin:0}
+.legendRow .fetchStatus span{min-width:160px}
+.legend .chip{display:inline-flex;align-items:center;gap:.35rem;font-size:.78rem;padding:.18rem .45rem;border-radius:999px;border:1px solid var(--border);background:#fff}
+.legend .sw{width:13px;height:13px;border-radius:4px;border:1px solid var(--border)}
 main{padding:1rem}
 .board{max-width:1280px;margin:0 auto;background:var(--card);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow);padding:1rem}
 .tableWrap{overflow:auto;padding-top:.35rem;padding-left:.35rem}
@@ -127,6 +134,7 @@ footer.modalbar{grid-column:1/-1;display:flex;justify-content:space-between;alig
 @media (max-width:700px){.modal{grid-template-columns:1fr}.kv{grid-template-columns:1fr}}
 .heroHeader{gap:.4rem}
 @media (max-width:700px){.heroHeader{justify-content:flex-start;align-items:stretch}.heroToggle{width:100%}}
+@media (max-width:900px){.legendRow{flex-direction:column;align-items:stretch;gap:.75rem}.legendRow .fetchStatus{align-self:flex-start;width:100%;justify-content:flex-start;flex-wrap:wrap}}
 .summary{max-width:1280px;margin:2rem auto 0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem}
 .summary article{background:#fff;border:1px solid var(--border);border-radius:16px;padding:1rem 1.1rem;box-shadow:0 10px 32px rgba(16,42,67,.08)}
 .summary h2{margin:0 0 .35rem 0;font-size:1.05rem}
@@ -138,16 +146,16 @@ footer.modalbar{grid-column:1/-1;display:flex;justify-content:space-between;alig
 </style>
 </head>
 <body id="top">
-<header>
+<header class="collapsed sticky">
   <div class="container heroWrapper">
     <div class="heroHeader">
-      <button class="btn heroToggle" id="toggleHero" type="button" aria-pressed="false" aria-expanded="true" aria-controls="heroPanel">Riduci introduzione</button>
+      <button class="btn heroToggle" id="toggleHero" type="button" aria-pressed="true" aria-expanded="false" aria-controls="heroPanel">Espandi introduzione</button>
     </div>
     <div class="hero" id="heroPanel">
       <div class="heroContent">
         <h1>Tavola Periodica interattiva</h1>
-        <p>Una sola pagina che sintetizza filtri avanzati, integrazione dei dati online, finestre di dettaglio con tutte le proprietà e l’animazione del modello atomico.</p>
-        <p class="smallnote" style="margin:0;color:var(--muted)">Tutto in un’unica esperienza offline: funzioni interattive, dati completi e modale di dettaglio sono subito disponibili senza rete.</p>
+        <p>Una sola pagina con filtri didattici, dati offline completi e animazione atomica in un’unica esperienza.</p>
+        <p class="smallnote" style="margin:0;color:var(--muted)">Tutte le funzioni interattive e i dataset sono disponibili anche senza connessione.</p>
         <div class="updateNote" aria-live="polite">
           <span class="badge">Novità recenti</span>
           <ul>
@@ -184,19 +192,6 @@ footer.modalbar{grid-column:1/-1;display:flex;justify-content:space-between;alig
             <option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option><option>11</option><option>12</option><option>13</option><option>14</option><option>15</option><option>16</option><option>17</option><option>18</option>
           </select>
         </label>
-        <fieldset style="display:flex;gap:.4rem;align-items:center">
-          <legend style="font-size:.85rem;color:var(--muted)">Categoria</legend>
-          <label><input type="checkbox" class="fCat" value="alcalino" checked/> Alcalini</label>
-          <label><input type="checkbox" class="fCat" value="alcalino-terroso" checked/> Alcalino-terrosi</label>
-          <label><input type="checkbox" class="fCat" value="transizione" checked/> Transizione</label>
-          <label><input type="checkbox" class="fCat" value="post" checked/> Post-transizione</label>
-          <label><input type="checkbox" class="fCat" value="semimetallo" checked/> Semimetalli</label>
-          <label><input type="checkbox" class="fCat" value="nonmetallo" checked/> Non-metalli</label>
-          <label><input type="checkbox" class="fCat" value="alogeno" checked/> Alogeni</label>
-          <label><input type="checkbox" class="fCat" value="nobile" checked/> Nobili</label>
-          <label><input type="checkbox" class="fCat" value="lantanide" checked/> Lantanidi</label>
-          <label><input type="checkbox" class="fCat" value="attinide" checked/> Attinidi</label>
-        </fieldset>
       </div>
     </div>
     <div class="alphaControls" aria-label="Attiva o attenua le aree della tavola">
@@ -215,8 +210,9 @@ footer.modalbar{grid-column:1/-1;display:flex;justify-content:space-between;alig
       <button class="btn" id="btnAlphaReset">Attiva tutte le aree</button>
     </div>
   </div>
-  <div class="container">
-    <div class="legend">
+  <div class="container legendRow">
+    <div class="legendCol">
+      <div class="legend">
         <span class="chip"><span class="sw" style="background:var(--alcalino)"></span> Alcalini</span>
         <span class="chip"><span class="sw" style="background:var(--alcalino-terroso)"></span> Alcalino-terrosi</span>
         <span class="chip"><span class="sw" style="background:var(--transizione)"></span> Transizione</span>
@@ -229,11 +225,11 @@ footer.modalbar{grid-column:1/-1;display:flex;justify-content:space-between;alig
         <span class="chip"><span class="sw" style="background:var(--attinide)"></span> Attinidi</span>
         <span class="chip"><span class="sw" style="background:var(--chonps)"></span> CHONPS</span>
       </div>
-      <p class="smallnote">I dati completi sono caricati localmente all’avvio. Usa "Aggiorna dati" solo se vuoi sincronizzare manualmente con il dataset pubblico.</p>
-      <div class="controls fetchStatus" style="margin-top:.5rem">
-        <button class="btn" id="btnFetch">Aggiorna dati</button>
-        <span id="fetchStatus" class="smallnote" aria-live="polite"></span>
-      </div>
+      <p class="smallnote legendNote">I dati completi sono caricati localmente all’avvio. Usa "Aggiorna dati" solo se vuoi sincronizzare manualmente con il dataset pubblico.</p>
+    </div>
+    <div class="controls fetchStatus">
+      <button class="btn" id="btnFetch">Aggiorna dati</button>
+      <span id="fetchStatus" class="smallnote" aria-live="polite"></span>
     </div>
   </div>
 </header>
@@ -411,7 +407,7 @@ if(typeof window.seedElementProps==='function'){
 const headerEl=document.querySelector('header');
 const heroToggle=document.getElementById('toggleHero');
 const heroPanel=document.getElementById('heroPanel');
-let heroUserCollapsed=false;
+let heroUserCollapsed=true;
 
 function setHeroCollapsed(state,{fromScroll=false}={}){
   if(!headerEl || !heroToggle){
@@ -431,7 +427,7 @@ function setHeroCollapsed(state,{fromScroll=false}={}){
 }
 
 if(headerEl && heroToggle){
-  setHeroCollapsed(false,{fromScroll:true});
+  setHeroCollapsed(true,{fromScroll:true});
   heroToggle.addEventListener('click',()=>{
     setHeroCollapsed(!headerEl.classList.contains('collapsed'));
   });
@@ -563,15 +559,13 @@ if(btnAlphaReset){
 
 /* ===== Filters ===== */
 const q=document.getElementById('search'), fPeriod=document.getElementById('fPeriod'), fGroup=document.getElementById('fGroup'), fBlock=document.getElementById('fBlock');
-const fCats=Array.from(document.querySelectorAll('.fCat'));
 function applyFilters(){
   const term=q.value.trim().toLowerCase(), p=fPeriod.value, g=fGroup.value, b=fBlock.value;
-  const allowed=new Set(fCats.filter(c=>c.checked).map(c=>c.value));
   const cells=grid.querySelectorAll('.cell');
   for(const c of cells){
     const el=ELEMENTS.find(x=>x.Z===+c.dataset.z);
     const hay=[el.sym,el.name,String(el.Z)].join(' ').toLowerCase();
-    const ok=(!term||hay.includes(term)) && (!p||String(el.period)===p) && (!g||String(el.group)===g) && (!b||el.block===b) && allowed.has(el.category);
+    const ok=(!term||hay.includes(term)) && (!p||String(el.period)===p) && (!g||String(el.group)===g) && (!b||el.block===b);
     c.style.visibility=ok?'visible':'hidden';
     c.style.pointerEvents=ok?'auto':'none';
     c.style.opacity=ok?'' : '.05';
@@ -580,11 +574,11 @@ function applyFilters(){
   }
 }
 [q,fPeriod,fGroup,fBlock].forEach(inp=>inp.addEventListener('input',applyFilters));
-fCats.forEach(cb=>cb.addEventListener('change',applyFilters));
 document.getElementById('btnReset').addEventListener('click',()=>{
-  q.value=''; fPeriod.value=''; fGroup.value=''; fBlock.value=''; fCats.forEach(c=>c.checked=true);
+  q.value=''; fPeriod.value=''; fGroup.value=''; fBlock.value='';
   document.getElementById('btnChonps').setAttribute('aria-pressed','false'); toggleChonps(false); applyFilters();
 });
+applyFilters();
 
 /* ===== CHONPS ===== */
 const btnChonps=document.getElementById('btnChonps');
