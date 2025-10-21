@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <title>Simulatore Dinamico di Ionizzazione</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    :root {
+      color-scheme: light dark;
+      font-family: "Segoe UI", Roboto, sans-serif;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background: radial-gradient(circle at top, #1f3c88 0%, #0d1b3d 50%, #040813 100%);
+      color: #f5f5f5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    header {
+      text-align: center;
+      padding: 2rem 1rem 1rem;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: clamp(2rem, 4vw, 3rem);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    header p {
+      max-width: 720px;
+      margin: 0.75rem auto 0;
+      line-height: 1.6;
+      color: rgba(255, 255, 255, 0.8);
+    }
+
+    main {
+      width: min(1100px, 96vw);
+      display: grid;
+      gap: 1.5rem;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      padding-bottom: 3rem;
+    }
+
+    section {
+      background: rgba(12, 26, 61, 0.85);
+      border-radius: 18px;
+      padding: 1.5rem;
+      box-shadow: 0 18px 45px rgba(0, 0, 0, 0.35);
+      backdrop-filter: blur(8px);
+      position: relative;
+      overflow: hidden;
+    }
+
+    section h2 {
+      margin-top: 0;
+      font-size: 1.35rem;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #8cc9ff;
+    }
+
+    .flex-row {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 0.35rem;
+      font-weight: 600;
+    }
+
+    select, input, button {
+      border-radius: 10px;
+      border: none;
+      padding: 0.65rem 0.9rem;
+      font-size: 1rem;
+      font-family: inherit;
+      background: rgba(255, 255, 255, 0.1);
+      color: inherit;
+      outline: none;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    select:focus, input:focus, button:focus {
+      box-shadow: inset 0 0 0 2px #8cc9ff;
+    }
+
+    button {
+      cursor: pointer;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(140, 201, 255, 0.3);
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      padding: 0.35rem 0.8rem;
+      background: rgba(140, 201, 255, 0.15);
+      color: #8cc9ff;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      margin-right: 0.5rem;
+    }
+
+    .atom-visualizer {
+      position: relative;
+      width: 220px;
+      height: 220px;
+      margin: 1.5rem auto;
+    }
+
+    .nucleus {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+      background: radial-gradient(circle, #f9b24c 0%, #f0811a 50%, #9c4609 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      color: #1e0b02;
+      box-shadow: 0 0 25px rgba(249, 178, 76, 0.6);
+    }
+
+    .electron-orbit {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      border: 1px dashed rgba(140, 201, 255, 0.3);
+      animation: rotateOrbit 18s linear infinite;
+    }
+
+    .electron {
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: radial-gradient(circle, #94d9ff 0%, #42b0ff 50%, #0063b5 100%);
+      box-shadow: 0 0 15px rgba(148, 217, 255, 0.75);
+      animation: orbit 9s linear infinite;
+      opacity: 0;
+      transform: scale(0.4);
+    }
+
+    .electron.visible {
+      opacity: 1;
+      transform: scale(1);
+      transition: opacity 0.45s ease, transform 0.45s ease;
+    }
+
+    @keyframes rotateOrbit {
+      from { transform: translate(-50%, -50%) rotate(0deg); }
+      to { transform: translate(-50%, -50%) rotate(360deg); }
+    }
+
+    @keyframes orbit {
+      from { transform: rotate(0deg) translateX(70px) rotate(0deg); }
+      to { transform: rotate(360deg) translateX(70px) rotate(-360deg); }
+    }
+
+    .charge-buttons, .electron-controls {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+      gap: 0.75rem;
+      margin-top: 1rem;
+    }
+
+    .slider-wrapper {
+      margin-top: 1.5rem;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: #8cc9ff;
+    }
+
+    .data-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 0.75rem;
+      margin-top: 1rem;
+    }
+
+    .data-card {
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 0.85rem;
+    }
+
+    .data-card strong {
+      display: block;
+      font-size: 1.2rem;
+    }
+
+    .element-symbol {
+      font-size: clamp(3rem, 5vw, 4rem);
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-align: center;
+      margin: 1rem 0 0.5rem;
+    }
+
+    .charge-display {
+      font-size: clamp(2rem, 4vw, 3rem);
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+
+    .charge-display .charge {
+      color: #f9b24c;
+    }
+
+    .explanation {
+      margin-top: 1rem;
+      line-height: 1.6;
+      font-size: 0.95rem;
+      color: rgba(255, 255, 255, 0.85);
+    }
+
+    .explanation strong {
+      color: #f9b24c;
+    }
+
+    .exercise {
+      background: rgba(8, 15, 34, 0.9);
+      border-radius: 14px;
+      padding: 1rem;
+      margin-top: 1rem;
+    }
+
+    .exercise input {
+      width: 100%;
+      margin-top: 0.35rem;
+    }
+
+    .exercise button {
+      margin-top: 0.6rem;
+      width: 100%;
+    }
+
+    .feedback {
+      margin-top: 0.75rem;
+      font-weight: 600;
+      min-height: 1.2rem;
+    }
+
+    .feedback.ok {
+      color: #6bffba;
+    }
+
+    .feedback.ko {
+      color: #ff8c8c;
+    }
+
+    footer {
+      width: 100%;
+      text-align: center;
+      padding: 1.5rem 0;
+      margin-top: auto;
+      color: rgba(255, 255, 255, 0.6);
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Simulatore Dinamico di Ionizzazione</h1>
+    <p>
+      Seleziona un elemento, imposta la carica e osserva come varia il numero di elettroni rispetto alla configurazione neutra. I protoni restano fissi: cambiare il loro numero significherebbe cambiare l'elemento!
+    </p>
+  </header>
+
+  <main>
+    <section id="element-base">
+      <h2>1. Configurazione Neutra e Invarianti</h2>
+      <div class="flex-row">
+        <div>
+          <label for="elementSelect">Scegli un elemento</label>
+          <select id="elementSelect"></select>
+        </div>
+        <div>
+          <span class="badge" id="atomicNumber">Z = --</span>
+          <span class="badge" id="massNumber">A ≈ --</span>
+        </div>
+      </div>
+
+      <div class="element-symbol" id="elementSymbol">--</div>
+      <div class="charge-display">Carica: <span class="charge" id="chargeDisplay">0</span></div>
+
+      <div class="atom-visualizer" aria-live="polite">
+        <div class="nucleus" id="nucleus">Z = --</div>
+        <div class="electron-orbit" id="electronOrbit" style="width: 180px; height: 180px;"></div>
+      </div>
+
+      <div class="data-grid">
+        <div class="data-card">
+          <strong id="protonCount">--</strong>
+          Proton<i>i</i> (fissi, definiscono l'elemento)
+        </div>
+        <div class="data-card">
+          <strong id="neutralElectronCount">--</strong>
+          Elettroni nello stato neutro
+        </div>
+        <div class="data-card">
+          <strong id="currentElectronCount">--</strong>
+          Elettroni nello stato attuale
+        </div>
+      </div>
+
+      <p class="explanation" id="neutralExplanation"></p>
+    </section>
+
+    <section id="charge-control">
+      <h2>2. Imposta la Carica dello ione</h2>
+      <p>Usa i pulsanti per scegliere rapidamente la carica desiderata.</p>
+      <div class="charge-buttons" id="chargeButtons"></div>
+
+      <div class="slider-wrapper">
+        <label for="chargeSlider">Cursore di carica (da -3 a +3)</label>
+        <input type="range" id="chargeSlider" min="-3" max="3" value="0" step="1">
+      </div>
+    </section>
+
+    <section id="electron-dynamics">
+      <h2>3. Dinamica degli Elettroni</h2>
+      <p>Modifica direttamente il numero di elettroni aggiungendo o rimuovendo cariche negative.</p>
+      <div class="electron-controls">
+        <button id="addElectron">+ Aggiungi elettrone</button>
+        <button id="removeElectron">− Rimuovi elettrone</button>
+        <button id="resetElectrons">Reset neutro</button>
+      </div>
+      <p class="explanation" id="chargeExplanation"></p>
+    </section>
+
+    <section id="exercise-module">
+      <h2>4. Esercitazioni Guidate</h2>
+      <p>Calcola elettroni, protoni e neutroni a partire da un elemento ionizzato. Gli elettroni variano con la carica!</p>
+      <div class="exercise">
+        <div class="flex-row" style="justify-content: space-between; align-items: center;">
+          <div>
+            <strong id="exerciseSymbol">--</strong>
+            <div id="exerciseNotation"></div>
+          </div>
+          <button id="newExercise">Genera esercizio</button>
+        </div>
+
+        <div class="flex-row" style="margin-top: 1rem;">
+          <div style="flex:1;">
+            <label for="protonAnswer">Numero di protoni (Z)</label>
+            <input type="number" id="protonAnswer" min="0" placeholder="Inserisci Z">
+          </div>
+          <div style="flex:1;">
+            <label for="neutronAnswer">Numero di neutroni (A − Z)</label>
+            <input type="number" id="neutronAnswer" min="0" placeholder="Inserisci neutroni">
+          </div>
+          <div style="flex:1;">
+            <label for="electronAnswer">Numero di elettroni</label>
+            <input type="number" id="electronAnswer" min="0" placeholder="Inserisci elettroni">
+          </div>
+        </div>
+
+        <button id="checkAnswers">Verifica risposte</button>
+        <div class="feedback" id="exerciseFeedback"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    Creato per visualizzare come la carica ionica dipende esclusivamente dalla variazione di elettroni.
+  </footer>
+
+  <script>
+    const elements = [
+      { symbol: "H", name: "Idrogeno", atomicNumber: 1, massNumber: 1 },
+      { symbol: "He", name: "Elio", atomicNumber: 2, massNumber: 4 },
+      { symbol: "Li", name: "Litio", atomicNumber: 3, massNumber: 7 },
+      { symbol: "Be", name: "Berillio", atomicNumber: 4, massNumber: 9 },
+      { symbol: "B", name: "Boro", atomicNumber: 5, massNumber: 11 },
+      { symbol: "C", name: "Carbonio", atomicNumber: 6, massNumber: 12 },
+      { symbol: "N", name: "Azoto", atomicNumber: 7, massNumber: 14 },
+      { symbol: "O", name: "Ossigeno", atomicNumber: 8, massNumber: 16 },
+      { symbol: "F", name: "Fluoro", atomicNumber: 9, massNumber: 19 },
+      { symbol: "Ne", name: "Neon", atomicNumber: 10, massNumber: 20 },
+      { symbol: "Na", name: "Sodio", atomicNumber: 11, massNumber: 23 },
+      { symbol: "Mg", name: "Magnesio", atomicNumber: 12, massNumber: 24 },
+      { symbol: "Al", name: "Alluminio", atomicNumber: 13, massNumber: 27 },
+      { symbol: "Si", name: "Silicio", atomicNumber: 14, massNumber: 28 },
+      { symbol: "P", name: "Fosforo", atomicNumber: 15, massNumber: 31 },
+      { symbol: "S", name: "Zolfo", atomicNumber: 16, massNumber: 32 },
+      { symbol: "Cl", name: "Cloro", atomicNumber: 17, massNumber: 35 },
+      { symbol: "K", name: "Potassio", atomicNumber: 19, massNumber: 39 },
+      { symbol: "Ca", name: "Calcio", atomicNumber: 20, massNumber: 40 }
+    ];
+
+    const elementSelect = document.getElementById('elementSelect');
+    const atomicNumberEl = document.getElementById('atomicNumber');
+    const massNumberEl = document.getElementById('massNumber');
+    const elementSymbolEl = document.getElementById('elementSymbol');
+    const nucleusEl = document.getElementById('nucleus');
+    const neutralExplanationEl = document.getElementById('neutralExplanation');
+    const protonCountEl = document.getElementById('protonCount');
+    const neutralElectronCountEl = document.getElementById('neutralElectronCount');
+    const currentElectronCountEl = document.getElementById('currentElectronCount');
+    const chargeDisplayEl = document.getElementById('chargeDisplay');
+    const electronOrbitEl = document.getElementById('electronOrbit');
+    const chargeExplanationEl = document.getElementById('chargeExplanation');
+
+    const chargeButtonsContainer = document.getElementById('chargeButtons');
+    const chargeSlider = document.getElementById('chargeSlider');
+    const addElectronBtn = document.getElementById('addElectron');
+    const removeElectronBtn = document.getElementById('removeElectron');
+    const resetElectronsBtn = document.getElementById('resetElectrons');
+
+    const exerciseSymbolEl = document.getElementById('exerciseSymbol');
+    const exerciseNotationEl = document.getElementById('exerciseNotation');
+    const protonAnswerInput = document.getElementById('protonAnswer');
+    const neutronAnswerInput = document.getElementById('neutronAnswer');
+    const electronAnswerInput = document.getElementById('electronAnswer');
+    const exerciseFeedbackEl = document.getElementById('exerciseFeedback');
+    const newExerciseBtn = document.getElementById('newExercise');
+    const checkAnswersBtn = document.getElementById('checkAnswers');
+
+    const chargeValues = [0, +1, +2, +3, -1, -2, -3];
+    let currentElement = elements[10];
+    let currentCharge = 0;
+
+    function populateElementSelect() {
+      elements.forEach(el => {
+        const option = document.createElement('option');
+        option.value = el.symbol;
+        option.textContent = `${el.symbol} – ${el.name}`;
+        elementSelect.appendChild(option);
+      });
+      elementSelect.value = currentElement.symbol;
+    }
+
+    function createElectrons(total) {
+      electronOrbitEl.innerHTML = '';
+      const orbitCount = Math.min(Math.ceil(total / 8), 3);
+
+      for (let orbitIndex = 1; orbitIndex <= orbitCount; orbitIndex++) {
+        const orbit = document.createElement('div');
+        orbit.className = 'electron-orbit';
+        const size = 120 + orbitIndex * 30;
+        orbit.style.width = `${size}px`;
+        orbit.style.height = `${size}px`;
+        orbit.style.animationDuration = `${14 - orbitIndex * 2}s`;
+
+        const electronsOnOrbit = Math.min(8, total - (orbitIndex - 1) * 8);
+        for (let i = 0; i < electronsOnOrbit; i++) {
+          const electron = document.createElement('div');
+          electron.className = 'electron visible';
+          electron.style.animationDelay = `${(i / electronsOnOrbit) * 2}s`;
+          orbit.appendChild(electron);
+        }
+
+        electronOrbitEl.appendChild(orbit);
+      }
+    }
+
+    function updateUI() {
+      atomicNumberEl.textContent = `Z = ${currentElement.atomicNumber}`;
+      massNumberEl.textContent = `A ≈ ${currentElement.massNumber}`;
+      elementSymbolEl.textContent = currentElement.symbol + formatCharge(currentCharge);
+      nucleusEl.textContent = `Z = ${currentElement.atomicNumber}`;
+      protonCountEl.textContent = currentElement.atomicNumber;
+      neutralElectronCountEl.textContent = currentElement.atomicNumber;
+
+      const electronCount = currentElement.atomicNumber - currentCharge;
+      currentElectronCountEl.textContent = electronCount;
+      chargeDisplayEl.textContent = formatCharge(currentCharge);
+      chargeSlider.value = currentCharge;
+
+      neutralExplanationEl.textContent = `In uno stato neutro, ${currentElement.name} ha ${currentElement.atomicNumber} protoni e ${currentElement.atomicNumber} elettroni. Cambiare il numero di protoni significherebbe trasformarlo in un elemento diverso.`;
+
+      const action = currentCharge === 0
+        ? 'non ha carica netta: protoni ed elettroni sono bilanciati.'
+        : currentCharge > 0
+          ? `ha perso ${currentCharge} elettrone${currentCharge > 1 ? 'i' : ''} rispetto allo stato neutro.`
+          : `ha acquisito ${Math.abs(currentCharge)} elettrone${Math.abs(currentCharge) > 1 ? 'i' : ''} rispetto allo stato neutro.`;
+
+      chargeExplanationEl.innerHTML = `Lo ione <strong>${currentElement.symbol}${formatCharge(currentCharge)}</strong> ${action}`;
+
+      createElectrons(Math.max(1, electronCount));
+    }
+
+    function formatCharge(value) {
+      if (value === 0) return '';
+      const sign = value > 0 ? '+' : '−';
+      const magnitude = Math.abs(value);
+      return magnitude === 1 ? sign : `${sign}${magnitude}`;
+    }
+
+    function setCharge(newCharge) {
+      currentCharge = Math.max(-3, Math.min(3, newCharge));
+      updateUI();
+    }
+
+    function setupChargeButtons() {
+      chargeButtonsContainer.innerHTML = '';
+      chargeValues.forEach(value => {
+        const button = document.createElement('button');
+        button.textContent = value === 0 ? 'Neutro' : (value > 0 ? `+${value}` : value);
+        button.addEventListener('click', () => setCharge(value));
+        chargeButtonsContainer.appendChild(button);
+      });
+    }
+
+    elementSelect.addEventListener('change', () => {
+      currentElement = elements.find(el => el.symbol === elementSelect.value);
+      setCharge(0);
+    });
+
+    chargeSlider.addEventListener('input', () => {
+      setCharge(parseInt(chargeSlider.value, 10));
+    });
+
+    addElectronBtn.addEventListener('click', () => setCharge(currentCharge - 1));
+    removeElectronBtn.addEventListener('click', () => setCharge(currentCharge + 1));
+    resetElectronsBtn.addEventListener('click', () => setCharge(0));
+
+    function generateExercise() {
+      const element = elements[Math.floor(Math.random() * elements.length)];
+      const charge = Math.floor(Math.random() * 7) - 3; // -3 to +3
+      const adjustedCharge = charge === 0 ? 1 : charge; // avoid zero charge
+
+      currentExercise = {
+        element,
+        charge: adjustedCharge,
+        massNumber: element.massNumber + Math.floor(Math.random() * 3) - 1
+      };
+
+      exerciseSymbolEl.textContent = element.symbol;
+      const superscript = currentExercise.massNumber;
+      const subscript = element.atomicNumber;
+      const chargeText = formatCharge(adjustedCharge);
+      exerciseNotationEl.innerHTML = `<sup>${superscript}</sup><sub>${subscript}</sub>${element.symbol}${chargeText}`;
+
+      protonAnswerInput.value = '';
+      neutronAnswerInput.value = '';
+      electronAnswerInput.value = '';
+      exerciseFeedbackEl.textContent = '';
+      exerciseFeedbackEl.className = 'feedback';
+    }
+
+    function checkExercise() {
+      if (!currentExercise) return;
+      const protonAnswer = parseInt(protonAnswerInput.value, 10);
+      const neutronAnswer = parseInt(neutronAnswerInput.value, 10);
+      const electronAnswer = parseInt(electronAnswerInput.value, 10);
+
+      const correctProtons = currentExercise.element.atomicNumber;
+      const correctNeutrons = currentExercise.massNumber - currentExercise.element.atomicNumber;
+      const correctElectrons = currentExercise.element.atomicNumber - currentExercise.charge;
+
+      if (Number.isNaN(protonAnswer) || Number.isNaN(neutronAnswer) || Number.isNaN(electronAnswer)) {
+        exerciseFeedbackEl.textContent = 'Compila tutti i campi con numeri validi.';
+        exerciseFeedbackEl.className = 'feedback ko';
+        return;
+      }
+
+      const protonsOk = protonAnswer === correctProtons;
+      const neutronsOk = neutronAnswer === correctNeutrons;
+      const electronsOk = electronAnswer === correctElectrons;
+
+      if (protonsOk && neutronsOk && electronsOk) {
+        exerciseFeedbackEl.textContent = 'Ottimo! Tutte le risposte sono corrette.';
+        exerciseFeedbackEl.className = 'feedback ok';
+      } else {
+        const messages = [];
+        if (!protonsOk) messages.push(`Protoni: ${correctProtons}`);
+        if (!neutronsOk) messages.push(`Neutroni: ${correctNeutrons}`);
+        if (!electronsOk) messages.push(`Elettroni: ${correctElectrons}`);
+        exerciseFeedbackEl.textContent = `Ricontrolla: ${messages.join(' – ')}`;
+        exerciseFeedbackEl.className = 'feedback ko';
+      }
+    }
+
+    newExerciseBtn.addEventListener('click', generateExercise);
+    checkAnswersBtn.addEventListener('click', checkExercise);
+
+    let currentExercise = null;
+    populateElementSelect();
+    setupChargeButtons();
+    setCharge(0);
+    generateExercise();
+  </script>
+</body>
+</html>
