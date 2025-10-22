@@ -337,6 +337,13 @@
 
     <section id="charge-control">
       <h2>2. Imposta la Carica dello ione</h2>
+      <p class="explanation">
+        <strong>Nota didattica</strong> – Non tutte le cariche sono possibili come ioni monoatomici stabili.
+        Gli elementi tendono alla configurazione di gas nobile più vicina: per questo Na forma soprattutto Na⁺,
+        Cl forma Cl⁻, Ca forma Ca²⁺, mentre elementi come C, Si, P, S preferiscono legami covalenti o composti
+        poliatomici (es. CO₃²⁻, PO₄³⁻, SO₄²⁻). Inoltre non è possibile togliere più elettroni di quanti
+        l’atomo ne possieda: ad esempio, H neutro ha 1 elettrone, può formare H⁺ ma non H²⁺.
+      </p>
       <p>Usa i pulsanti per scegliere rapidamente la carica desiderata.</p>
       <div class="charge-buttons" id="chargeButtons"></div>
 
@@ -417,6 +424,28 @@
       { symbol: "Ca", name: "Calcio", atomicNumber: 20, massNumber: 40 }
     ];
 
+    const allowedCharges = {
+      H:  [-1, 0, +1],
+      He: [0],
+      Li: [0, +1],
+      Be: [0, +2],
+      B:  [0, +3],
+      C:  [0],
+      N:  [0, -3],
+      O:  [0, -2],
+      F:  [0, -1],
+      Ne: [0],
+      Na: [0, +1],
+      Mg: [0, +2],
+      Al: [0, +3],
+      Si: [0],
+      P:  [0],
+      S:  [0, -2],
+      Cl: [0, -1],
+      K:  [0, +1],
+      Ca: [0, +2]
+    };
+
     const elementSelect = document.getElementById('elementSelect');
     const atomicNumberEl = document.getElementById('atomicNumber');
     const massNumberEl = document.getElementById('massNumber');
@@ -445,9 +474,21 @@
     const newExerciseBtn = document.getElementById('newExercise');
     const checkAnswersBtn = document.getElementById('checkAnswers');
 
-    const chargeValues = [0, +1, +2, +3, -1, -2, -3];
+    const chargeSliderLabel = document.querySelector('label[for="chargeSlider"]');
+
     let currentElement = elements[10];
     let currentCharge = 0;
+
+    function clampToAllowedCharge(symbol, q) {
+      const list = allowedCharges[symbol] ?? [0];
+      if (list.includes(q)) return q;
+      let best = list[0], bestDist = Math.abs(q - best);
+      for (const v of list) {
+        const d = Math.abs(q - v);
+        if (d < bestDist) { best = v; bestDist = d; }
+      }
+      return best;
+    }
 
     function populateElementSelect() {
       elements.forEach(el => {
@@ -516,23 +557,97 @@
       return magnitude === 1 ? sign : `${sign}${magnitude}`;
     }
 
-    function setCharge(newCharge) {
-      currentCharge = Math.max(-3, Math.min(3, newCharge));
-      updateUI();
+    function formatChargeLabelValue(value) {
+      if (value === 0) return '0';
+      return value > 0 ? `+${value}` : `${value}`;
     }
 
-    function setupChargeButtons() {
+    function gcd(a, b) {
+      let x = Math.abs(a);
+      let y = Math.abs(b);
+      while (y !== 0) {
+        const temp = y;
+        y = x % y;
+        x = temp;
+      }
+      return x || 1;
+    }
+
+    function updateChargeControlsFor(symbol) {
+      const rawList = allowedCharges[symbol] ?? [0];
+      const list = [...rawList].sort((a, b) => a - b);
+
       chargeButtonsContainer.innerHTML = '';
-      chargeValues.forEach(value => {
-        const button = document.createElement('button');
-        button.textContent = value === 0 ? 'Neutro' : (value > 0 ? `+${value}` : value);
-        button.addEventListener('click', () => setCharge(value));
-        chargeButtonsContainer.appendChild(button);
+      list.forEach(value => {
+        const b = document.createElement('button');
+        b.textContent = value === 0 ? 'Neutro' : (value > 0 ? `+${value}` : `${value}`);
+        b.addEventListener('click', () => setCharge(value));
+        chargeButtonsContainer.appendChild(b);
       });
+
+      const min = list.length ? Math.min(...list) : 0;
+      const max = list.length ? Math.max(...list) : 0;
+      chargeSlider.min = min;
+      chargeSlider.max = max;
+
+      if (list.length > 1) {
+        const diffs = [];
+        for (let i = 1; i < list.length; i++) {
+          diffs.push(Math.abs(list[i] - list[i - 1]));
+        }
+        const step = diffs.reduce((acc, val) => gcd(acc, val), diffs[0]);
+        chargeSlider.step = step || 1;
+      } else {
+        chargeSlider.step = 1;
+      }
+
+      if (!rawList.includes(currentCharge)) {
+        currentCharge = clampToAllowedCharge(symbol, currentCharge);
+        chargeSlider.value = currentCharge;
+        updateUI();
+      }
+
+      chargeSlider.value = currentCharge;
+
+      if (chargeSliderLabel) {
+        chargeSliderLabel.textContent = `Cursore di carica (da ${formatChargeLabelValue(min)} a ${formatChargeLabelValue(max)})`;
+      }
+    }
+
+    function setCharge(newCharge) {
+      let q = Math.max(-3, Math.min(3, newCharge));
+      let clamped = clampToAllowedCharge(currentElement.symbol, q);
+
+      const Z = currentElement.atomicNumber;
+      const electronCount = Z - clamped;
+      if (electronCount < 0) {
+        clamped = Z;
+      }
+
+      const wasAdjusted = clamped !== newCharge;
+
+      currentCharge = clamped;
+      updateUI();
+      chargeSlider.value = currentCharge;
+
+      const warnBoxId = "plausibilityWarn";
+      let warn = document.getElementById(warnBoxId);
+      if (wasAdjusted) {
+        if (!warn) {
+          warn = document.createElement('p');
+          warn.id = warnBoxId;
+          warn.className = 'explanation';
+          document.getElementById('charge-control').appendChild(warn);
+        }
+        warn.textContent = `La carica richiesta non è plausibile per ${currentElement.name} come ione monoatomico, oppure superava il numero di elettroni disponibili. Impostato a ${formatChargeLabelValue(currentCharge)}.`;
+      } else if (warn) {
+        warn.textContent = '';
+      }
     }
 
     elementSelect.addEventListener('change', () => {
       currentElement = elements.find(el => el.symbol === elementSelect.value);
+      updateChargeControlsFor(currentElement.symbol);
       setCharge(0);
     });
 
@@ -546,19 +661,22 @@
 
     function generateExercise() {
       const element = elements[Math.floor(Math.random() * elements.length)];
-      const charge = Math.floor(Math.random() * 7) - 3; // -3 to +3
-      const adjustedCharge = charge === 0 ? 1 : charge; // avoid zero charge
+      const rawList = allowedCharges[element.symbol] ?? [0];
+      const list = [...rawList];
+      const candidates = list.filter(v => v !== 0);
+      const pool = candidates.length ? candidates : list;
+      const charge = pool[Math.floor(Math.random() * pool.length)];
 
       currentExercise = {
         element,
-        charge: adjustedCharge,
+        charge,
         massNumber: element.massNumber + Math.floor(Math.random() * 3) - 1
       };
 
       exerciseSymbolEl.textContent = element.symbol;
       const superscript = currentExercise.massNumber;
       const subscript = element.atomicNumber;
-      const chargeText = formatCharge(adjustedCharge);
+      const chargeText = formatCharge(charge);
       exerciseNotationEl.innerHTML = `<sup>${superscript}</sup><sub>${subscript}</sub>${element.symbol}${chargeText}`;
 
       protonAnswerInput.value = '';
@@ -606,7 +724,7 @@
 
     let currentExercise = null;
     populateElementSelect();
-    setupChargeButtons();
+    updateChargeControlsFor(currentElement.symbol);
     setCharge(0);
     generateExercise();
   </script>
