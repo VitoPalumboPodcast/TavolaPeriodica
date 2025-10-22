@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Officina Molecolare – Costruttore Interattivo</title>
+<style>
+  :root{
+    --bg:#060b1b; --panel:#0d162d; --panel-border:#1f2a44; --ink:#e2e8f0;
+    --muted:#94a3b8; --accent:#38bdf8; --accent-dark:#0ea5e9;
+    --shadow:0 16px 40px rgba(8,15,35,.55);
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0; font-family:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    background:radial-gradient(circle at 75% -10%, rgba(56,189,248,.25), transparent 45%),
+               radial-gradient(circle at 10% 110%, rgba(129,140,248,.28), transparent 55%),
+               linear-gradient(200deg, #030712 0%, #060b1b 60%, #020617 100%);
+    color:var(--ink);
+    display:flex; flex-direction:column; gap:0;
+  }
+  header{
+    padding:16px 22px; display:flex; flex-wrap:wrap; gap:14px; align-items:center;
+    background:rgba(2,6,23,.65); backdrop-filter:blur(14px); border-bottom:1px solid rgba(148,163,184,.1);
+  }
+  header h1{margin:0; font-size:22px; letter-spacing:.2px; font-weight:700;}
+  header p{margin:0; color:var(--muted); font-size:14px; max-width:640px;}
+  header .tagline{display:flex; flex-direction:column; gap:4px;}
+
+  main{
+    flex:1; display:grid; grid-template-columns:360px 1fr 320px; gap:18px;
+    padding:18px; min-height:0;
+  }
+  @media (max-width:1400px){ main{grid-template-columns:320px 1fr;} .info{order:3; grid-column:1/-1;} }
+  @media (max-width:1024px){ main{grid-template-columns:1fr;} .palette{order:1;} .scene-wrap{order:2;} }
+
+  .panel{
+    background:var(--panel); border:1px solid var(--panel-border); border-radius:18px;
+    box-shadow:var(--shadow); padding:18px; min-height:0;
+  }
+  .panel h2{margin:0 0 12px; font-size:16px; letter-spacing:.2px; text-transform:uppercase; color:#bae6fd;}
+  .panel h3{margin:18px 0 8px; font-size:15px; color:#cbd5f5; letter-spacing:.15px; text-transform:uppercase;}
+  .panel p{margin:6px 0; color:var(--muted); line-height:1.5; font-size:14px;}
+
+  .palette-groups{display:flex; flex-direction:column; gap:18px;}
+  .elements{display:grid; grid-template-columns:repeat(auto-fill,minmax(78px,1fr)); gap:10px;}
+  .element-card{
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;
+    padding:10px; border-radius:14px; border:1px solid rgba(148,163,184,.18);
+    background:rgba(15,23,42,.72); color:var(--ink); cursor:grab; user-select:none;
+    position:relative; transition:transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+  }
+  .element-card:active{cursor:grabbing;}
+  .element-card:hover{transform:translateY(-4px); border-color:rgba(59,130,246,.55); box-shadow:0 10px 20px rgba(37,99,235,.15);}
+  .element-symbol{font-size:20px; font-weight:700; letter-spacing:.3px;}
+  .element-name{font-size:11px; text-transform:uppercase; color:#cbd5f5; letter-spacing:.5px;}
+  .element-valence{font-size:11px; color:var(--muted);}
+
+  .scene-wrap{position:relative;}
+  .scene{
+    position:relative; height:100%; min-height:660px; border-radius:22px;
+    border:1px solid rgba(148,163,184,.14);
+    background:radial-gradient(circle at 50% 50%, rgba(30,64,175,.24) 0%, rgba(8,15,35,.72) 55%, rgba(2,6,23,.95) 100%);
+    overflow:hidden; isolation:isolate;
+  }
+  .scene::before{
+    content:""; position:absolute; inset:-20%; background:radial-gradient(circle at 50% 50%, rgba(56,189,248,.12), transparent 60%);
+    pointer-events:none; animation:rotateAura 26s linear infinite;
+  }
+  @keyframes rotateAura{to{transform:rotate(360deg);}}
+
+  .drop-hint{
+    position:absolute; inset:18px; border-radius:18px; border:2px dashed rgba(148,163,184,.28);
+    display:flex; align-items:center; justify-content:center; color:rgba(148,163,184,.45);
+    letter-spacing:.3px; text-transform:uppercase; font-size:13px; transition:opacity .18s ease;
+  }
+  .scene.dragging .drop-hint{color:rgba(56,189,248,.75); border-color:rgba(56,189,248,.5);}
+  .scene.hasAtoms .drop-hint{opacity:0; pointer-events:none;}
+
+  .atom-node{
+    position:absolute; width:72px; height:72px; border-radius:50%;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    color:white; font-weight:600; letter-spacing:.4px; gap:4px;
+    cursor:grab; user-select:none; transform:translate(-50%,-50%);
+    box-shadow:0 16px 30px rgba(8,15,35,.45), inset 0 0 22px rgba(255,255,255,.12);
+    border:2px solid rgba(255,255,255,.14);
+  }
+  .atom-node:active{cursor:grabbing;}
+  .atom-node .count{font-size:11px; color:rgba(255,255,255,.7); text-transform:uppercase;}
+  .atom-node.selected{outline:3px solid rgba(56,189,248,.8); outline-offset:6px; z-index:40;}
+
+  .bond{
+    position:absolute; width:2px; background:linear-gradient(90deg, rgba(148,163,184,.55), rgba(226,232,240,.95));
+    transform-origin:0 50%; pointer-events:none; filter:drop-shadow(0 0 12px rgba(56,189,248,.2));
+  }
+  .bond.double::after, .bond.triple::after, .bond.triple::before{
+    content:""; position:absolute; left:-6px; top:-6px; right:-6px; bottom:-6px; border-radius:4px;
+    border:1px solid rgba(148,163,184,.25);
+  }
+  .bond.double{box-shadow:0 0 0 2px rgba(59,130,246,.35);} 
+  .bond.triple{box-shadow:0 0 0 2px rgba(245,158,11,.4);}
+
+  .controls{position:absolute; right:22px; bottom:22px; display:flex; gap:10px;}
+  .control-btn{
+    border:none; border-radius:999px; padding:12px 16px; font-size:13px; font-weight:600;
+    background:rgba(14,165,233,.9); color:white; cursor:pointer; display:inline-flex; gap:8px; align-items:center;
+    box-shadow:0 12px 28px rgba(14,165,233,.3); transition:transform .18s ease, background .18s ease;
+  }
+  .control-btn:hover{transform:translateY(-3px); background:rgba(56,189,248,.95);}
+  .control-btn.secondary{background:rgba(30,41,59,.75); box-shadow:0 12px 24px rgba(8,15,35,.35); border:1px solid rgba(148,163,184,.18); color:#f1f5f9;}
+  .control-btn.secondary:hover{background:rgba(51,65,85,.85);}
+
+  .info{display:flex; flex-direction:column; gap:16px;}
+  .info .card{background:rgba(15,23,42,.82); border:1px solid rgba(148,163,184,.18); border-radius:16px; padding:16px; box-shadow:0 12px 28px rgba(8,15,35,.4);}
+  .info .card h3{margin-top:0; font-size:15px; text-transform:uppercase; letter-spacing:.2px; color:#cbd5f5;}
+  .formula{display:flex; align-items:center; gap:12px; flex-wrap:wrap; font-size:15px;}
+  .formula span{background:rgba(56,189,248,.1); border:1px solid rgba(56,189,248,.35); padding:6px 10px; border-radius:999px;}
+  .molecule-badge{display:inline-flex; align-items:center; gap:8px; padding:8px 12px; border-radius:12px; background:rgba(14,116,144,.35); border:1px solid rgba(34,211,238,.35); color:#7dd3fc; font-weight:600; letter-spacing:.3px;}
+  .steps{counter-reset:step;} .steps li{list-style:none; counter-increment:step; margin-bottom:12px; font-size:14px; color:var(--muted);} .steps li::before{content:counter(step); width:22px; height:22px; border-radius:50%; background:rgba(56,189,248,.22); color:#38bdf8; display:inline-flex; align-items:center; justify-content:center; margin-right:8px; font-weight:600;}
+
+  .toast{
+    position:fixed; left:50%; bottom:28px; transform:translateX(-50%);
+    background:rgba(2,6,23,.88); border:1px solid rgba(56,189,248,.45); padding:12px 18px; border-radius:14px;
+    font-size:14px; color:#e0f2fe; box-shadow:0 10px 30px rgba(14,116,144,.4);
+    opacity:0; pointer-events:none; transition:opacity .22s ease, transform .22s ease;
+  }
+  .toast.show{opacity:1; transform:translate(-50%, -4px);}
+</style>
+</head>
+<body>
+<header>
+  <div class="tagline">
+    <h1>Officina Molecolare</h1>
+    <p>Trascina gli atomi nello spazio di lavoro, collega nuclei per creare legami e scopri la formula della molecola che hai progettato. Il laboratorio riconosce automaticamente diverse molecole celebri (come acqua, biossido di carbonio, ammoniaca, metano) e ti guida verso nuove combinazioni.</p>
+  </div>
+</header>
+
+<main>
+  <section class="panel palette">
+    <h2>Atomi disponibili</h2>
+    <div class="palette-groups" id="palette"></div>
+  </section>
+
+  <section class="scene-wrap">
+    <div class="scene" id="scene">
+      <div class="drop-hint" id="dropHint">Trascina qui gli atomi</div>
+      <div class="controls">
+        <button class="control-btn secondary" id="clearScene">Svuota tavolo</button>
+        <button class="control-btn" id="exportScene">Esporta molecola</button>
+      </div>
+    </div>
+  </section>
+
+  <aside class="panel info">
+    <div class="card">
+      <h3>Formula istantanea</h3>
+      <div class="formula" id="formula">Nessun atomo ancora</div>
+    </div>
+    <div class="card">
+      <h3>Molecole riconosciute</h3>
+      <div id="recognized">Trascina gli atomi e crea legami per scoprire molecole note!</div>
+    </div>
+    <div class="card">
+      <h3>Come funziona</h3>
+      <ol class="steps">
+        <li>Trascina gli elementi dalla palette nella scena. Ogni atomo può essere riposizionato liberamente.</li>
+        <li>Seleziona due atomi con un click per creare un legame. Clicca nuovamente sulla coppia per trasformare il legame in doppio o triplo.</li>
+        <li>Doppio click su un atomo per eliminarlo; doppio click su un legame per rimuoverlo.</li>
+        <li>Utilizza il pulsante "Esporta" per ottenere un JSON con gli atomi e i legami creati.</li>
+      </ol>
+    </div>
+  </aside>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const paletteData = [
+  {
+    title:"CHONPS", hint:"I mattoncini della vita",
+    atoms:[
+      {symbol:"H", name:"Idrogeno", color:"#38bdf8", bg:"radial-gradient(circle at 30% 30%, #bae6fd, #0284c7)", valence:1},
+      {symbol:"C", name:"Carbonio", color:"#fbbf24", bg:"radial-gradient(circle at 30% 30%, #fef3c7, #b45309)", valence:4},
+      {symbol:"N", name:"Azoto", color:"#60a5fa", bg:"radial-gradient(circle at 30% 30%, #dbeafe, #1d4ed8)", valence:3},
+      {symbol:"O", name:"Ossigeno", color:"#f87171", bg:"radial-gradient(circle at 30% 30%, #fecaca, #b91c1c)", valence:2},
+      {symbol:"P", name:"Fosforo", color:"#f472b6", bg:"radial-gradient(circle at 30% 30%, #fbcfe8, #9d174d)", valence:3},
+      {symbol:"S", name:"Zolfo", color:"#facc15", bg:"radial-gradient(circle at 30% 30%, #fef08a, #ca8a04)", valence:2}
+    ]
+  },
+  {
+    title:"Alogeni & affini", hint:"Ottimi per legami polari",
+    atoms:[
+      {symbol:"F", name:"Fluoro", color:"#a3e635", bg:"radial-gradient(circle at 30% 30%, #ecfccb, #4d7c0f)", valence:1},
+      {symbol:"Cl", name:"Cloro", color:"#4ade80", bg:"radial-gradient(circle at 30% 30%, #dcfce7, #15803d)", valence:1},
+      {symbol:"Br", name:"Bromo", color:"#f97316", bg:"radial-gradient(circle at 30% 30%, #fed7aa, #c2410c)", valence:1}
+    ]
+  },
+  {
+    title:"Metalli leggeri", hint:"Perfetti per complessi ionici",
+    atoms:[
+      {symbol:"Na", name:"Sodio", color:"#fde68a", bg:"radial-gradient(circle at 30% 30%, #fef3c7, #d97706)", valence:1},
+      {symbol:"Mg", name:"Magnesio", color:"#818cf8", bg:"radial-gradient(circle at 30% 30%, #e0e7ff, #4338ca)", valence:2},
+      {symbol:"Ca", name:"Calcio", color:"#fcd34d", bg:"radial-gradient(circle at 30% 30%, #fef3c7, #b45309)", valence:2}
+    ]
+  }
+];
+
+const recognizedMolecules = [
+  { formula:{H:2}, formulaText:"H₂", name:"Idrogeno molecolare", description:"Gas leggerissimo e infiammabile, usato come combustibile e nelle celle a combustibile." },
+  { formula:{N:2}, formulaText:"N₂", name:"Azoto molecolare", description:"Gas inerte che costituisce il 78% dell’atmosfera; impiegato per creare ambienti privi di ossigeno." },
+  { formula:{O:2}, formulaText:"O₂", name:"Ossigeno molecolare", description:"Gas essenziale per la respirazione e la combustione." },
+  { formula:{O:3}, formulaText:"O₃", name:"Ozono", description:"Gas ossidante che protegge la Terra dai raggi UV; usato anche per disinfezione." },
+  { formula:{P:4}, formulaText:"P₄", name:"Fosforo bianco", description:"Solido reattivo e tossico, usato in fiammiferi e fertilizzanti (sotto altre forme)." },
+  { formula:{S:8}, formulaText:"S₈", name:"Zolfo elementare", description:"Solido giallo, usato per produrre acido solforico e fungicidi." },
+  { formula:{F:2}, formulaText:"F₂", name:"Fluoro molecolare", description:"Gas tossico e altamente reattivo, usato per produrre composti fluorurati." },
+  { formula:{Cl:2}, formulaText:"Cl₂", name:"Cloro molecolare", description:"Gas verdastro disinfettante e sbiancante; impiegato per purificare l’acqua." },
+  { formula:{Br:2}, formulaText:"Br₂", name:"Bromo molecolare", description:"Liquido rossastro tossico, usato in prodotti chimici e fotografici." },
+  { formula:{C:1,H:4}, formulaText:"CH₄", name:"Metano", description:"Principale componente del gas naturale; combustibile domestico e industriale." },
+  { formula:{N:1,H:3}, formulaText:"NH₃", name:"Ammoniaca", description:"Gas con odore pungente, usato per fertilizzanti e detergenti." },
+  { formula:{H:2,O:1}, formulaText:"H₂O", name:"Acqua", description:"Molecola essenziale per la vita; solvente universale." },
+  { formula:{P:1,H:3}, formulaText:"PH₃", name:"Fosfina", description:"Gas tossico e infiammabile; sottoprodotto della decomposizione organica." },
+  { formula:{H:2,S:1}, formulaText:"H₂S", name:"Solfuro di idrogeno", description:"Gas tossico con odore di uova marce; prodotto da processi biologici anaerobici." },
+  { formula:{H:1,F:1}, formulaText:"HF", name:"Acido fluoridrico", description:"Acido corrosivo usato per incidere vetro e metalli." },
+  { formula:{H:1,Cl:1}, formulaText:"HCl", name:"Acido cloridrico", description:"Acido forte usato in laboratorio, nella digestione e nella pulizia dei metalli." },
+  { formula:{H:1,Br:1}, formulaText:"HBr", name:"Acido bromidrico", description:"Acido forte usato in sintesi organica." },
+  { formula:{Na:1,H:1}, formulaText:"NaH", name:"Idruro di sodio", description:"Solido fortemente basico, reagisce violentemente con l’acqua." },
+  { formula:{Mg:1,H:2}, formulaText:"MgH₂", name:"Idruro di magnesio", description:"Solido usato come materiale per immagazzinare idrogeno." },
+  { formula:{Ca:1,H:2}, formulaText:"CaH₂", name:"Idruro di calcio", description:"Reagisce con l’acqua producendo idrogeno; agente disidratante." },
+  { formula:{C:1,O:1}, formulaText:"CO", name:"Monossido di carbonio", description:"Gas tossico prodotto da combustione incompleta; si lega all’emoglobina." },
+  { formula:{C:1,O:2}, formulaText:"CO₂", name:"Diossido di carbonio", description:"Gas serra, prodotto da combustione e respirazione; usato per bevande gassate." },
+  { formula:{N:1,O:1}, formulaText:"NO", name:"Monossido di azoto", description:"Gas intermedio in processi biologici e industriali." },
+  { formula:{N:1,O:2}, formulaText:"NO₂", name:"Diossido di azoto", description:"Gas tossico e inquinante atmosferico." },
+  { formula:{N:2,O:1}, formulaText:"N₂O", name:"Protossido di azoto", description:"\u201cGas esilarante\u201d, anestetico e propellente." },
+  { formula:{N:2,O:3}, formulaText:"N₂O₃", name:"Triossido di diazoto", description:"Anidride dell’acido nitroso; instabile." },
+  { formula:{N:2,O:5}, formulaText:"N₂O₅", name:"Pentaossido di diazoto", description:"Anidride dell’acido nitrico; ossidante potente." },
+  { formula:{S:1,O:2}, formulaText:"SO₂", name:"Diossido di zolfo", description:"Gas tossico, usato come conservante e nell’industria chimica." },
+  { formula:{S:1,O:3}, formulaText:"SO₃", name:"Triossido di zolfo", description:"Reagisce con l’acqua formando acido solforico." },
+  { formula:{P:4,O:6}, formulaText:"P₄O₆", name:"Esossido di tetrafosforo", description:"Anidride fosforosa; base per acido fosforoso." },
+  { formula:{P:4,O:10}, formulaText:"P₄O₁₀", name:"Decaossido di tetrafosforo", description:"Anidride fosforica; disidratante e base per acido fosforico." },
+  { formula:{Cl:2,O:1}, formulaText:"Cl₂O", name:"Monossido di dicloro", description:"Gas instabile, ossidante." },
+  { formula:{Cl:1,O:2}, formulaText:"ClO₂", name:"Diossido di cloro", description:"Disinfettante per acqua e superfici." },
+  { formula:{Br:2,O:1}, formulaText:"Br₂O", name:"Monossido di dibromo", description:"Composto instabile, ossidante." },
+  { formula:{Na:2,O:1}, formulaText:"Na₂O", name:"Ossido di sodio", description:"Solido basico, reagisce con acqua formando idrossido." },
+  { formula:{Mg:1,O:1}, formulaText:"MgO", name:"Ossido di magnesio", description:"Polvere bianca, refrattaria, usata come antiacido." },
+  { formula:{Ca:1,O:1}, formulaText:"CaO", name:"Ossido di calcio", description:"\u201cCalce viva\u201d, reagisce con acqua producendo calore." },
+  { formula:{Na:2,O:2}, formulaText:"Na₂O₂", name:"Perossido di sodio", description:"Solido ossidante; libera ossigeno con l’acqua." },
+  { formula:{Na:1,O:1,H:1}, formulaText:"NaOH", name:"Idrossido di sodio", description:"Base forte; usato in saponi e detergenti." },
+  { formula:{Mg:1,O:2,H:2}, formulaText:"Mg(OH)₂", name:"Idrossido di magnesio", description:"Antiacido e lassativo blando." },
+  { formula:{Ca:1,O:2,H:2}, formulaText:"Ca(OH)₂", name:"Idrossido di calcio", description:"\u201cCalce spenta\u201d; usato in edilizia e correzione dei suoli acidi." },
+  { formula:{H:2,C:1,O:3}, formulaText:"H₂CO₃", name:"Acido carbonico", description:"Acido debole in equilibrio con CO₂; presente nelle bevande gassate." },
+  { formula:{H:1,N:1,O:2}, formulaText:"HNO₂", name:"Acido nitroso", description:"Instabile; forma nitriti." },
+  { formula:{H:1,N:1,O:3}, formulaText:"HNO₃", name:"Acido nitrico", description:"Acido forte, ossidante; impiegato per fertilizzanti ed esplosivi." },
+  { formula:{H:3,P:1,O:3}, formulaText:"H₃PO₃", name:"Acido fosforoso", description:"Acido medio, usato come riducente." },
+  { formula:{H:3,P:1,O:4}, formulaText:"H₃PO₄", name:"Acido fosforico", description:"Acido debole; usato in fertilizzanti e bevande." },
+  { formula:{H:2,S:1,O:3}, formulaText:"H₂SO₃", name:"Acido solforoso", description:"Instabile, si forma da SO₂ disciolto in acqua." },
+  { formula:{H:2,S:1,O:4}, formulaText:"H₂SO₄", name:"Acido solforico", description:"Acido forte, base per fertilizzanti, batterie e industria chimica." },
+  { formula:{H:1,Cl:1,O:1}, formulaText:"HClO", name:"Acido ipocloroso", description:"Disinfettante e ossidante." },
+  { formula:{H:1,Cl:1,O:2}, formulaText:"HClO₂", name:"Acido cloroso", description:"Ossidante instabile." },
+  { formula:{H:1,Cl:1,O:3}, formulaText:"HClO₃", name:"Acido clorico", description:"Ossidante forte, usato in esplosivi." },
+  { formula:{H:1,Cl:1,O:4}, formulaText:"HClO₄", name:"Acido perclorico", description:"Acido fortissimo e ossidante." },
+  { formula:{H:1,Br:1,O:1}, formulaText:"HBrO", name:"Acido ipobromoso", description:"Ossidante debole." },
+  { formula:{H:1,Br:1,O:3}, formulaText:"HBrO₃", name:"Acido bromico", description:"Ossidante forte." },
+  { formula:{Na:1,F:1}, formulaText:"NaF", name:"Fluoruro di sodio", description:"Usato nei dentifrici e per fluorizzare l’acqua." },
+  { formula:{Na:1,Cl:1}, formulaText:"NaCl", name:"Cloruro di sodio", description:"Sale da cucina." },
+  { formula:{Na:1,Br:1}, formulaText:"NaBr", name:"Bromuro di sodio", description:"Usato in fotografia e medicina." },
+  { formula:{Mg:1,F:2}, formulaText:"MgF₂", name:"Fluoruro di magnesio", description:"Ottico trasparente ai raggi UV." },
+  { formula:{Mg:1,Cl:2}, formulaText:"MgCl₂", name:"Cloruro di magnesio", description:"Igroscopico; usato per integrare magnesio." },
+  { formula:{Mg:1,Br:2}, formulaText:"MgBr₂", name:"Bromuro di magnesio", description:"Sale usato in laboratorio." },
+  { formula:{Ca:1,F:2}, formulaText:"CaF₂", name:"Fluorite", description:"Minerale usato per vetri e acciai." },
+  { formula:{Ca:1,Cl:2}, formulaText:"CaCl₂", name:"Cloruro di calcio", description:"Assorbente d’umidit\u00e0 e antigelo." },
+  { formula:{Ca:1,Br:2}, formulaText:"CaBr₂", name:"Bromuro di calcio", description:"Sale igroscopico; usato in fotografia." },
+  { formula:{Na:2,C:1,O:3}, formulaText:"Na₂CO₃", name:"Carbonato di sodio", description:"\u201cSoda Solvay\u201d; usato in vetro e detergenti." },
+  { formula:{Mg:1,C:1,O:3}, formulaText:"MgCO₃", name:"Carbonato di magnesio", description:"Usato come antiacido e gesso per ginnasti." },
+  { formula:{Ca:1,C:1,O:3}, formulaText:"CaCO₃", name:"Carbonato di calcio", description:"Principale componente del calcare e delle conchiglie." },
+  { formula:{Na:1,H:1,C:1,O:3}, formulaText:"NaHCO₃", name:"Bicarbonato di sodio", description:"Usato per lievitare, pulire e neutralizzare acidi." },
+  { formula:{Ca:1,H:2,C:2,O:6}, formulaText:"Ca(HCO₃)₂", name:"Bicarbonato di calcio", description:"Presente nelle acque dure." },
+  { formula:{Na:1,N:1,O:3}, formulaText:"NaNO₃", name:"Nitrato di sodio", description:"Fertilizzante e conservante alimentare." },
+  { formula:{Mg:1,N:2,O:6}, formulaText:"Mg(NO₃)₂", name:"Nitrato di magnesio", description:"Fertilizzante solubile." },
+  { formula:{Ca:1,N:2,O:6}, formulaText:"Ca(NO₃)₂", name:"Nitrato di calcio", description:"Fertilizzante e disidratante." },
+  { formula:{Na:1,N:1,O:2}, formulaText:"NaNO₂", name:"Nitrito di sodio", description:"Conservante e precursore di coloranti." },
+  { formula:{Ca:1,N:2,O:4}, formulaText:"Ca(NO₂)₂", name:"Nitrito di calcio", description:"Conservante e additivo per calcestruzzi." },
+  { formula:{Na:2,S:1,O:4}, formulaText:"Na₂SO₄", name:"Solfato di sodio", description:"Detergenti e produzione di vetro." },
+  { formula:{Mg:1,S:1,O:4}, formulaText:"MgSO₄", name:"Solfato di magnesio", description:"\u201cSale inglese\u201d; lassativo e rilassante muscolare." },
+  { formula:{Ca:1,S:1,O:4}, formulaText:"CaSO₄", name:"Solfato di calcio", description:"Gesso comune; materiale da costruzione." },
+  { formula:{Na:2,S:1,O:3}, formulaText:"Na₂SO₃", name:"Solfito di sodio", description:"Conservante e agente riducente." },
+  { formula:{Ca:1,S:1,O:3}, formulaText:"CaSO₃", name:"Solfito di calcio", description:"Utilizzato per trattare acque e carta." },
+  { formula:{Na:3,P:1,O:4}, formulaText:"Na₃PO₄", name:"Fosfato di sodio", description:"Additivo alimentare e detergente." },
+  { formula:{Mg:3,P:2,O:8}, formulaText:"Mg₃(PO₄)₂", name:"Fosfato di magnesio", description:"Additivo e integratore." },
+  { formula:{Ca:3,P:2,O:8}, formulaText:"Ca₃(PO₄)₂", name:"Fosfato di calcio", description:"Costituente delle ossa e dei denti." },
+  { formula:{Na:2,H:1,P:1,O:4}, formulaText:"Na₂HPO₄", name:"Idrogenofosfato di sodio", description:"Tampone chimico." },
+  { formula:{Na:1,H:2,P:1,O:4}, formulaText:"NaH₂PO₄", name:"Diidrogenofosfato di sodio", description:"Regolatore di pH e additivo." },
+  { formula:{Ca:1,H:1,P:1,O:4}, formulaText:"CaHPO₄", name:"Idrogenofosfato di calcio", description:"Integratore di calcio e fosforo." },
+  { formula:{Na:1,Cl:1,O:1}, formulaText:"NaClO", name:"Ipoclorito di sodio", description:"Candeggina, disinfettante." },
+  { formula:{Ca:1,Cl:2,O:2}, formulaText:"Ca(ClO)₂", name:"Ipoclorito di calcio", description:"Disinfettante per piscine." },
+  { formula:{Na:1,Cl:1,O:3}, formulaText:"NaClO₃", name:"Clorato di sodio", description:"Ossidante e diserbante." },
+  { formula:{Na:1,Cl:1,O:4}, formulaText:"NaClO₄", name:"Perclorato di sodio", description:"Ossidante e propellente." },
+  { formula:{Na:1,Br:1,O:3}, formulaText:"NaBrO₃", name:"Bromato di sodio", description:"Ossidante (oggi poco usato per tossicit\u00e0)." },
+  { formula:{Ca:1,Br:2,O:6}, formulaText:"Ca(BrO₃)₂", name:"Bromato di calcio", description:"Analogo del bromato di sodio." },
+  { formula:{H:2,O:2}, formulaText:"H₂O₂", name:"Perossido di idrogeno", description:"\u201cAcqua ossigenata\u201d; disinfettante e ossidante." },
+  { formula:{C:1,S:2}, formulaText:"CS₂", name:"Disolfuro di carbonio", description:"Solvente e materia prima per fibre artificiali." },
+  { formula:{C:1,Cl:4}, formulaText:"CCl₄", name:"Tetracloruro di carbonio", description:"Solvente non infiammabile (oggi tossico, poco usato)." },
+  { formula:{C:1,H:3,Cl:1}, formulaText:"CH₃Cl", name:"Clorometano", description:"Gas usato in sintesi organica e come refrigerante." },
+  { formula:{C:1,H:2,Br:2}, formulaText:"CH₂Br₂", name:"Dibromometano", description:"Solvente e intermedio chimico." }
+];
+
+const paletteContainer = document.getElementById('palette');
+const scene = document.getElementById('scene');
+const dropHint = document.getElementById('dropHint');
+const formulaBox = document.getElementById('formula');
+const recognizedBox = document.getElementById('recognized');
+const toast = document.getElementById('toast');
+
+let atoms = new Map();
+let bonds = new Map();
+let atomIdCounter = 0;
+let selectedAtomId = null;
+let selectedPair = null;
+
+function showToast(message){
+  toast.textContent = message;
+  toast.classList.add('show');
+  setTimeout(()=>toast.classList.remove('show'), 2200);
+}
+
+function renderPalette(){
+  paletteData.forEach(group => {
+    const wrapper = document.createElement('div');
+    const heading = document.createElement('div');
+    heading.innerHTML = `<strong style="font-size:14px; letter-spacing:.3px;">${group.title}</strong><br/><span style="color:var(--muted); font-size:12px;">${group.hint}</span>`;
+    wrapper.appendChild(heading);
+
+    const grid = document.createElement('div');
+    grid.className = 'elements';
+    group.atoms.forEach(atom => {
+      const card = document.createElement('div');
+      card.className = 'element-card';
+      card.draggable = true;
+      card.dataset.symbol = atom.symbol;
+      card.dataset.name = atom.name;
+      card.dataset.color = atom.color;
+      card.dataset.bg = atom.bg;
+      card.dataset.valence = atom.valence;
+
+      card.innerHTML = `<div class="element-symbol">${atom.symbol}</div>
+                        <div class="element-name">${atom.name}</div>
+                        <div class="element-valence">Valenza ${atom.valence}</div>`;
+
+      card.addEventListener('dragstart', handleDragStart);
+      card.addEventListener('dragend', () => scene.classList.remove('dragging'));
+      grid.appendChild(card);
+    });
+    wrapper.appendChild(grid);
+    paletteContainer.appendChild(wrapper);
+  });
+}
+
+function handleDragStart(event){
+  const card = event.currentTarget;
+  event.dataTransfer.setData('text/plain', JSON.stringify({
+    symbol: card.dataset.symbol,
+    name: card.dataset.name,
+    color: card.dataset.color,
+    bg: card.dataset.bg,
+    valence: Number(card.dataset.valence)
+  }));
+  scene.classList.add('dragging');
+}
+
+scene.addEventListener('dragover', event => {
+  event.preventDefault();
+});
+
+scene.addEventListener('drop', event => {
+  event.preventDefault();
+  scene.classList.remove('dragging');
+  const payload = event.dataTransfer.getData('text/plain');
+  if(!payload) return;
+  const data = JSON.parse(payload);
+  const rect = scene.getBoundingClientRect();
+  const x = event.clientX - rect.left;
+  const y = event.clientY - rect.top;
+  addAtom(data, x, y);
+});
+
+function addAtom(data, x, y){
+  const id = `a${atomIdCounter++}`;
+  const node = document.createElement('div');
+  node.className = 'atom-node';
+  node.style.background = data.bg;
+  node.style.left = `${x}px`;
+  node.style.top = `${y}px`;
+  node.style.borderColor = data.color;
+  node.dataset.id = id;
+  node.dataset.symbol = data.symbol;
+  node.dataset.valence = data.valence;
+  node.innerHTML = `<div style="font-size:22px; font-weight:700;">${data.symbol}</div><div class="count">Val ${data.valence}</div>`;
+
+  enableAtomInteractions(node);
+  scene.appendChild(node);
+  atoms.set(id, { id, symbol:data.symbol, valence:data.valence, name:data.name, x, y, element:node });
+  scene.classList.add('hasAtoms');
+  dropHint.textContent = 'Clicca per collegare legami';
+  updateFormula();
+}
+
+function enableAtomInteractions(node){
+  node.addEventListener('pointerdown', startDragNode);
+  node.addEventListener('click', handleAtomClick);
+  node.addEventListener('dblclick', removeAtom);
+}
+
+function startDragNode(event){
+  const target = event.currentTarget;
+  const id = target.dataset.id;
+  const atom = atoms.get(id);
+  if(!atom) return;
+  const rect = scene.getBoundingClientRect();
+  target.setPointerCapture(event.pointerId);
+  target.dataset.dragging = 'true';
+  const offsetX = event.clientX - rect.left - atom.x;
+  const offsetY = event.clientY - rect.top - atom.y;
+
+  function moveHandler(ev){
+    const currentRect = scene.getBoundingClientRect();
+    atom.x = ev.clientX - currentRect.left - offsetX;
+    atom.y = ev.clientY - currentRect.top - offsetY;
+    target.style.left = `${atom.x}px`;
+    target.style.top = `${atom.y}px`;
+    updateBondPositions();
+  }
+
+  function upHandler(ev){
+    target.releasePointerCapture(ev.pointerId);
+    target.removeEventListener('pointermove', moveHandler);
+    target.removeEventListener('pointerup', upHandler);
+    delete target.dataset.dragging;
+  }
+
+  target.addEventListener('pointermove', moveHandler);
+  target.addEventListener('pointerup', upHandler);
+}
+
+function handleAtomClick(event){
+  event.stopPropagation();
+  const id = event.currentTarget.dataset.id;
+  const isSelected = selectedAtomId === id;
+  if(isSelected){
+    clearSelection();
+    return;
+  }
+  selectAtom(id);
+}
+
+function selectAtom(id){
+  clearSelection();
+  selectedAtomId = id;
+  const atom = atoms.get(id);
+  if(atom){
+    atom.element.classList.add('selected');
+    if(selectedPair && selectedPair.includes(id)){
+      cycleBond(selectedPair[0], selectedPair[1]);
+    }
+  }
+}
+
+function clearSelection(){
+  atoms.forEach(atom => atom.element.classList.remove('selected'));
+  selectedAtomId = null;
+}
+
+scene.addEventListener('click', event => {
+  if(event.target === scene) clearSelection();
+});
+
+scene.addEventListener('pointerup', event => {
+  if(event.target.classList.contains('atom-node')){
+    if(event.target.dataset.dragging === 'true') return;
+    const id = event.target.dataset.id;
+    if(selectedAtomId && selectedAtomId !== id){
+      createOrCycleBond(selectedAtomId, id);
+    }
+    selectedAtomId = id;
+    atoms.get(id).element.classList.add('selected');
+  }
+});
+
+function createBondId(a,b){
+  return [a,b].sort().join('-');
+}
+
+function createOrCycleBond(a,b){
+  const bondId = createBondId(a,b);
+  if(bonds.has(bondId)){
+    cycleBond(a,b);
+  }else{
+    const line = document.createElement('div');
+    line.className = 'bond';
+    line.dataset.id = bondId;
+    line.dataset.order = '1';
+    line.addEventListener('dblclick', () => removeBond(bondId));
+    scene.appendChild(line);
+    bonds.set(bondId, {id:bondId, a,b, order:1, element:line});
+    selectedPair = [a,b];
+    showToast('Legame creato: clicca nuovamente per doppio/triplo legame');
+    updateBondPositions();
+  }
+  updateFormula();
+}
+
+function cycleBond(a,b){
+  const bondId = createBondId(a,b);
+  const bond = bonds.get(bondId);
+  if(!bond) return;
+  bond.order = bond.order === 3 ? 1 : bond.order + 1;
+  bond.element.classList.toggle('double', bond.order === 2);
+  bond.element.classList.toggle('triple', bond.order === 3);
+  bond.element.dataset.order = bond.order;
+  selectedPair = [a,b];
+  showToast(`Legame ${bond.order === 1 ? 'singolo' : bond.order === 2 ? 'doppio' : 'triplo'}`);
+  updateBondPositions();
+}
+
+function removeBond(id){
+  const bond = bonds.get(id);
+  if(!bond) return;
+  bond.element.remove();
+  bonds.delete(id);
+  selectedPair = null;
+  showToast('Legame rimosso');
+  updateFormula();
+}
+
+function removeAtom(event){
+  const id = event.currentTarget.dataset.id;
+  const atom = atoms.get(id);
+  if(!atom) return;
+  atoms.delete(id);
+  event.currentTarget.remove();
+  [...bonds.values()].forEach(bond => {
+    if(bond.a === id || bond.b === id){
+      removeBond(bond.id);
+    }
+  });
+  if(atoms.size === 0){
+    scene.classList.remove('hasAtoms');
+    dropHint.textContent = 'Trascina qui gli atomi';
+  }
+  updateFormula();
+}
+
+function updateBondPositions(){
+  bonds.forEach(bond => {
+    const atomA = atoms.get(bond.a);
+    const atomB = atoms.get(bond.b);
+    if(!atomA || !atomB) return;
+    const dx = atomB.x - atomA.x;
+    const dy = atomB.y - atomA.y;
+    const distance = Math.hypot(dx, dy);
+    const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+    const element = bond.element;
+    element.style.width = `${distance}px`;
+    element.style.left = `${atomA.x}px`;
+    element.style.top = `${atomA.y}px`;
+    element.style.transform = `translate(-50%, -50%) rotate(${angle}deg)`;
+    element.style.height = bond.order === 1 ? '3px' : bond.order === 2 ? '6px' : '9px';
+    element.style.borderRadius = '4px';
+    if(bond.order === 1){
+      element.style.background = 'linear-gradient(90deg, rgba(148,163,184,.55), rgba(226,232,240,.95))';
+    }else if(bond.order === 2){
+      element.style.background = 'linear-gradient(90deg, rgba(96,165,250,.6), rgba(59,130,246,.95))';
+    }else{
+      element.style.background = 'linear-gradient(90deg, rgba(251,191,36,.6), rgba(249,115,22,.95))';
+    }
+  });
+}
+
+function updateFormula(){
+  const counts = {};
+  atoms.forEach(atom => {
+    counts[atom.symbol] = (counts[atom.symbol] || 0) + 1;
+  });
+
+  if(Object.keys(counts).length === 0){
+    formulaBox.textContent = 'Nessun atomo ancora';
+    recognizedBox.textContent = 'Trascina gli atomi e crea legami per scoprire molecole note!';
+    return;
+  }
+
+  formulaBox.innerHTML = '';
+  const sortedSymbols = Object.keys(counts).sort((a,b)=>a.localeCompare(b));
+  sortedSymbols.forEach(symbol => {
+    const span = document.createElement('span');
+    const count = counts[symbol];
+    span.textContent = count > 1 ? `${symbol}${count}` : symbol;
+    formulaBox.appendChild(span);
+  });
+
+  const matches = recognizedMolecules.filter(item => sameFormula(item.formula, counts));
+  if(matches.length === 0){
+    recognizedBox.innerHTML = `<div style="color:#94a3b8;">Formula unica! Continua a sperimentare per trovare molecole celebri.</div>`;
+  }else{
+    recognizedBox.innerHTML = '';
+    matches.forEach(match => {
+      const badge = document.createElement('div');
+      badge.className = 'molecule-badge';
+      const formulaLabel = match.formulaText || Object.entries(match.formula).map(([sym,count]) => `${sym}${count>1?count:''}`).join('');
+      badge.innerHTML = `<span style="font-weight:700; font-size:13px;">${formulaLabel}</span><span>${match.name}</span>`;
+      const desc = document.createElement('p');
+      desc.style.margin = '6px 0 16px';
+      desc.style.color = '#cbd5f5';
+      desc.textContent = match.description;
+      recognizedBox.appendChild(badge);
+      recognizedBox.appendChild(desc);
+    });
+  }
+}
+
+function sameFormula(reference, candidate){
+  const keysRef = Object.keys(reference);
+  const keysCandidate = Object.keys(candidate);
+  if(keysRef.length !== keysCandidate.length) return false;
+  return keysRef.every(k => candidate[k] === reference[k]);
+}
+
+function clearScene(){
+  atoms.forEach(atom => atom.element.remove());
+  atoms.clear();
+  bonds.forEach(bond => bond.element.remove());
+  bonds.clear();
+  selectedAtomId = null;
+  selectedPair = null;
+  scene.classList.remove('hasAtoms');
+  dropHint.textContent = 'Trascina qui gli atomi';
+  updateFormula();
+}
+
+document.getElementById('clearScene').addEventListener('click', () => {
+  clearScene();
+  showToast('Spazio di lavoro pulito');
+});
+
+document.getElementById('exportScene').addEventListener('click', () => {
+  const data = {
+    atoms: [...atoms.values()].map(atom => ({ id:atom.id, symbol:atom.symbol, valence:atom.valence, x:atom.x, y:atom.y })),
+    bonds: [...bonds.values()].map(bond => ({ a:bond.a, b:bond.b, order:bond.order }))
+  };
+  navigator.clipboard.writeText(JSON.stringify(data, null, 2)).then(() => {
+    showToast('Molecola esportata negli appunti!');
+  }).catch(() => {
+    showToast('Copia negli appunti non riuscita');
+  });
+});
+
+renderPalette();
+updateFormula();
+</script>
+</body>
+</html>
