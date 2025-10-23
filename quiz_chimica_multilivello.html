@@ -1,1136 +1,1384 @@
 <!DOCTYPE html>
 <html lang="it">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Quiz di Chimica - Multilivello</title>
-  <style>
-    :root {
-      color-scheme: light dark;
-      --accent: #1f7a8c;
-      --accent-light: #e1f5f9;
-      --bg: #f7f9fb;
-      --text: #17212b;
-      --card: #ffffff;
-      --wrong: #d7263d;
-      --wrong-bg: #fde4ea;
-      --wrong-text: #7a0f22;
-      --correct: #2a9d8f;
-      --correct-bg: #d9f3ef;
-      --correct-text: #0f4f45;
-    }
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Quiz di Chimica Multilivello</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f4f6fb;
+        --card: #ffffff;
+        --text: #1e293b;
+        --muted: #475569;
+        --accent: #2563eb;
+        --accent-soft: #e0e7ff;
+        --border: rgba(15, 23, 42, 0.12);
+        --option-bg: #f8fafc;
+        --option-border: rgba(100, 116, 139, 0.35);
+        --correct-bg: #d1fae5;
+        --correct-border: #34d399;
+        --correct-text: #065f46;
+        --wrong-bg: #fee2e2;
+        --wrong-border: #f87171;
+        --wrong-text: #7f1d1d;
+      }
 
-    * {
-      box-sizing: border-box;
-    }
+      * {
+        box-sizing: border-box;
+      }
 
-    body {
-      font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-      margin: 0;
-      background: var(--bg);
-      color: var(--text);
-      line-height: 1.6;
-      padding: 24px;
-      display: flex;
-      justify-content: center;
-    }
-
-    .app-shell {
-      width: min(960px, 100%);
-      background: var(--card);
-      border-radius: 18px;
-      box-shadow: 0 18px 45px rgba(15, 23, 42, 0.15);
-      padding: clamp(20px, 5vw, 40px);
-    }
-
-    header {
-      text-align: center;
-      margin-bottom: 24px;
-    }
-
-    h1 {
-      margin: 0;
-      font-size: clamp(2rem, 4vw, 2.5rem);
-    }
-
-    p.lead {
-      margin-top: 12px;
-      color: #4b5563;
-      font-size: clamp(1rem, 2.5vw, 1.15rem);
-    }
-
-    .difficulty-selector {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 16px;
-      margin: 32px 0 24px;
-    }
-
-    .difficulty-selector button {
-      border: 2px solid transparent;
-      border-radius: 14px;
-      padding: 18px;
-      font-size: 1rem;
-      font-weight: 600;
-      cursor: pointer;
-      background: var(--accent-light);
-      color: var(--accent);
-      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-    }
-
-    .difficulty-selector button:hover,
-    .difficulty-selector button:focus-visible {
-      transform: translateY(-3px);
-      box-shadow: 0 12px 24px rgba(31, 122, 140, 0.25);
-      border-color: var(--accent);
-      outline: none;
-    }
-
-    .difficulty-selector button.active {
-      background: var(--accent);
-      color: white;
-      border-color: transparent;
-    }
-
-    .quiz-card {
-      background: linear-gradient(145deg, #ffffff, #f0f5fb);
-      border-radius: 18px;
-      padding: clamp(20px, 4vw, 36px);
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
-    }
-
-    .meta {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      justify-content: space-between;
-      margin-bottom: 18px;
-      font-weight: 600;
-      color: #334155;
-    }
-
-    .question {
-      font-size: clamp(1.1rem, 2.5vw, 1.35rem);
-      margin-bottom: 20px;
-    }
-
-    .options {
-      display: grid;
-      gap: 12px;
-    }
-
-    .option {
-      border: 2px solid rgba(148, 163, 184, 0.35);
-      border-radius: 12px;
-      padding: 14px 16px;
-      background: #f8fafc;
-      color: var(--text);
-      cursor: pointer;
-      text-align: left;
-      font-size: 1rem;
-      transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease, background 0.2s ease;
-    }
-
-    .option:hover,
-    .option:focus-visible {
-      border-color: var(--accent);
-      box-shadow: 0 10px 20px rgba(31, 122, 140, 0.15);
-      transform: translateY(-2px);
-      outline: none;
-    }
-
-    .option.correct {
-      border-color: var(--correct);
-      background: var(--correct-bg);
-      color: var(--correct-text);
-      cursor: default;
-    }
-
-    .option.wrong {
-      border-color: var(--wrong);
-      background: var(--wrong-bg);
-      color: var(--wrong-text);
-      cursor: default;
-    }
-
-    .feedback {
-      margin-top: 18px;
-      padding: 16px;
-      border-radius: 12px;
-      font-weight: 500;
-      background: rgba(148, 163, 184, 0.12);
-      border: 1px solid rgba(148, 163, 184, 0.3);
-      display: none;
-    }
-
-    .feedback.visible {
-      display: block;
-    }
-
-    .feedback.positive {
-      border-color: rgba(42, 157, 143, 0.4);
-      background: rgba(42, 157, 143, 0.15);
-      color: #11665c;
-    }
-
-    .feedback.negative {
-      border-color: rgba(215, 38, 61, 0.4);
-      background: rgba(215, 38, 61, 0.12);
-      color: #861226;
-    }
-
-    .controls {
-      margin-top: 24px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 12px;
-    }
-
-    .controls button {
-      border: none;
-      border-radius: 12px;
-      padding: 12px 20px;
-      font-size: 1rem;
-      cursor: pointer;
-      background: var(--accent);
-      color: #fff;
-      font-weight: 600;
-      transition: background 0.2s ease, transform 0.2s ease;
-    }
-
-    .controls button[disabled] {
-      background: #94a3b8;
-      cursor: not-allowed;
-    }
-
-    .controls button:hover:not([disabled]),
-    .controls button:focus-visible:not([disabled]) {
-      transform: translateY(-2px);
-      outline: none;
-    }
-
-    .summary {
-      text-align: center;
-      padding: 24px 18px;
-      border-radius: 16px;
-      background: rgba(31, 122, 140, 0.08);
-      margin-top: 28px;
-      display: none;
-    }
-
-    .summary.visible {
-      display: block;
-    }
-
-    @media (max-width: 640px) {
       body {
-        padding: 16px;
+        margin: 0;
+        min-height: 100vh;
+        font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+        background: linear-gradient(180deg, #eef2ff 0%, #f8fafc 30%, #ffffff 100%);
+        color: var(--text);
+        display: flex;
+        justify-content: center;
+        padding: clamp(20px, 5vw, 60px);
+      }
+
+      .app {
+        width: min(1040px, 100%);
+        background: var(--card);
+        border-radius: 28px;
+        box-shadow: 0 30px 80px rgba(15, 23, 42, 0.12);
+        padding: clamp(24px, 5vw, 48px);
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+      }
+
+      header {
+        text-align: center;
+        display: grid;
+        gap: 12px;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(2rem, 4vw, 2.75rem);
+        letter-spacing: -0.02em;
+      }
+
+      p.lead {
+        margin: 0;
+        font-size: clamp(1rem, 2.5vw, 1.2rem);
+        color: var(--muted);
+      }
+
+      .difficulty-panel {
+        display: grid;
+        gap: 18px;
+      }
+
+      .difficulty-buttons {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 16px;
+      }
+
+      .difficulty-buttons button {
+        border: 2px solid transparent;
+        border-radius: 16px;
+        padding: 16px 18px;
+        background: var(--accent-soft);
+        color: var(--accent);
+        font-weight: 600;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+      }
+
+      .difficulty-buttons button:hover,
+      .difficulty-buttons button:focus-visible {
+        outline: none;
+        transform: translateY(-2px);
+        box-shadow: 0 18px 30px rgba(37, 99, 235, 0.2);
+        border-color: var(--accent);
+      }
+
+      .difficulty-buttons button.active {
+        background: var(--accent);
+        color: white;
+        box-shadow: 0 20px 40px rgba(37, 99, 235, 0.35);
+      }
+
+      .quiz-card {
+        border: 1px solid var(--border);
+        border-radius: 24px;
+        padding: clamp(20px, 4vw, 36px);
+        background: linear-gradient(140deg, #ffffff 0%, #f3f4ff 100%);
+        display: grid;
+        gap: 20px;
+      }
+
+      .meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px 20px;
+        justify-content: space-between;
+        color: var(--muted);
+        font-weight: 600;
+      }
+
+      .question-text {
+        font-size: clamp(1.1rem, 2.5vw, 1.4rem);
+        line-height: 1.5;
+      }
+
+      .options {
+        display: grid;
+        gap: 12px;
+      }
+
+      .option {
+        border: 2px solid var(--option-border);
+        border-radius: 14px;
+        padding: 14px 16px;
+        background: var(--option-bg);
+        color: var(--text);
+        font-size: 1rem;
+        text-align: left;
+        cursor: pointer;
+        transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+      }
+
+      .option span {
+        font-weight: 700;
+        margin-right: 8px;
+        color: var(--muted);
+      }
+
+      .option:hover,
+      .option:focus-visible {
+        outline: none;
+        transform: translateY(-1px);
+        box-shadow: 0 14px 30px rgba(15, 23, 42, 0.12);
+        border-color: var(--accent);
+      }
+
+      .option.correct {
+        background: var(--correct-bg);
+        border-color: var(--correct-border);
+        color: var(--correct-text);
+      }
+
+      .option.correct span {
+        color: var(--correct-text);
+      }
+
+      .option.wrong {
+        background: var(--wrong-bg);
+        border-color: var(--wrong-border);
+        color: var(--wrong-text);
+      }
+
+      .option.wrong span {
+        color: var(--wrong-text);
+      }
+
+      .option[disabled] {
+        cursor: default;
+        opacity: 0.96;
+        box-shadow: none;
+        transform: none;
+      }
+
+      .feedback {
+        border-radius: 14px;
+        padding: 16px 18px;
+        border: 1px solid var(--border);
+        background: rgba(148, 163, 184, 0.15);
+        color: var(--muted);
+        display: none;
+        line-height: 1.5;
+      }
+
+      .feedback.visible {
+        display: block;
+      }
+
+      .feedback.positive {
+        border-color: rgba(34, 197, 94, 0.4);
+        background: rgba(187, 247, 208, 0.45);
+        color: #166534;
+      }
+
+      .feedback.negative {
+        border-color: rgba(248, 113, 113, 0.45);
+        background: rgba(254, 202, 202, 0.45);
+        color: #7f1d1d;
       }
 
       .controls {
-        flex-direction: column;
-        align-items: stretch;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        justify-content: space-between;
+        align-items: center;
       }
 
       .controls button {
-        width: 100%;
-      }
-    }
-  </style>
-</head>
-<body>
-  <main class="app-shell" role="main">
-    <header>
-      <h1>Quiz di Chimica Multilivello</h1>
-      <p class="lead">
-        Scegli il livello di difficoltà, rispondi alle domande con feedback immediato e scopri la spiegazione di ogni risposta.
-        Alla fine otterrai il tuo punteggio complessivo.
-      </p>
-    </header>
-
-    <section>
-      <h2>Seleziona la difficoltà</h2>
-      <div class="difficulty-selector" role="group" aria-label="Seleziona livello di difficoltà">
-        <button type="button" data-level="facile">Livello Super Facile / Concreto</button>
-        <button type="button" data-level="medio">Livello Medio</button>
-        <button type="button" data-level="difficile">Livello Difficile</button>
-      </div>
-    </section>
-
-    <section class="quiz-card" aria-live="polite">
-      <div class="meta">
-        <span id="progress">Domanda 0 / 0</span>
-        <span id="score">Punteggio: 0</span>
-      </div>
-      <div id="question" class="question">Seleziona un livello per iniziare.</div>
-      <div id="options" class="options" role="list"></div>
-      <div id="feedback" class="feedback" aria-live="assertive"></div>
-      <div class="controls">
-        <button id="next" type="button" disabled>Prossima domanda</button>
-        <button id="restart" type="button" disabled>Ricomincia</button>
-      </div>
-      <div id="summary" class="summary" role="status"></div>
-    </section>
-  </main>
-
-  <script>
-    const quizData = {
-      facile: [
-        {
-          question: "Che cos'è la Materia?",
-          choices: [
-            "Tutto ciò che è visibile.",
-            "Tutto ciò che è caldo.",
-            "Tutto ciò che ha un peso (massa) e occupa uno spazio (volume).",
-            "Tutto ciò che si rompe."
-          ],
-          correct: 2,
-          explanation:
-            "La materia è definita come tutto ciò che possiede massa e occupa un determinato volume."
-        },
-        {
-          question:
-            "Se metti fango e acqua in un bicchiere e lo lasci fermo, il fango (che è più denso) cade giù. Qual è la forza che lo spinge in fondo?",
-          choices: [
-            "La forza centrifuga.",
-            "La Forza di Gravità.",
-            "La forza magnetica.",
-            "La forza di pressione."
-          ],
-          correct: 1,
-          explanation:
-            "La decantazione sfrutta la diversa densità unita alla forza di gravità, che fa depositare le particelle più dense sul fondo."
-        },
-        {
-          question:
-            "L'insegnante spiega che 'il vuoto non esiste'. Perché un bicchiere che sembra vuoto è in realtà pieno?",
-          choices: [
-            "È pieno di elettricità.",
-            "È pieno di Aria.",
-            "È pieno di atomi che si vedono.",
-            "È pieno di luce."
-          ],
-          correct: 1,
-          explanation:
-            "Un bicchiere apparentemente vuoto contiene aria, che possiede massa e volume: quindi è materia."
-        },
-        {
-          question:
-            "Il ferro, l'oro e il rame (Cu) si trovano a sinistra nella Tavola Periodica. Sono quasi tutti solidi, lucenti e sono ottimi conduttori. Come vengono chiamati?",
-          choices: ["Non metalli.", "Gas nobili.", "Metalli.", "Semimetalli."],
-          correct: 2,
-          explanation:
-            "Gli elementi a sinistra della diagonale sono i metalli, lucenti e ottimi conduttori di calore ed elettricità."
-        },
-        {
-          question:
-            "La Chimica studia la materia non a livello macroscopico (ciò che vediamo), ma a un livello molto, molto piccolo. Come viene chiamato questo livello?",
-          choices: [
-            "Livello Atomico.",
-            "Livello Microscopico o Ultramicroscopico.",
-            "Livello Macroscopico.",
-            "Livello Visibile."
-          ],
-          correct: 1,
-          explanation:
-            "La chimica indaga la materia al livello microscopico o ultramicroscopico, dove si trovano atomi e molecole."
-        },
-        {
-          question: "Un Miscuglio Eterogeneo è un miscuglio in cui...",
-          choices: [
-            "I componenti sono perfettamente sciolti e non si vedono.",
-            "I singoli componenti sono visibilmente distinguibili (si vedono).",
-            "È una Sostanza Pura.",
-            "Si usa solo la Distillazione per separarlo."
-          ],
-          correct: 1,
-          explanation:
-            "In un miscuglio eterogeneo, come acqua e olio, i componenti restano visibili e distinguibili."
-        },
-        {
-          question:
-            "Quando usi lo scolapasta per scolare la pasta, stai usando un metodo di separazione basato sulla differenza di:",
-          choices: ["Colore.", "Peso (densità).", "Dimensione.", "Volatilità."],
-          correct: 2,
-          explanation:
-            "Lo scolapasta funziona per filtrazione, separando in base alla diversa dimensione dei componenti."
-        },
-        {
-          question:
-            "Se scaldi un oggetto, le sue particelle si allontanano (dilatazione). Cosa succede invece quando raffreddi un oggetto?",
-          choices: [
-            "Non succede nulla.",
-            "Le particelle restano dove sono.",
-            "Le particelle si avvicinano e l'oggetto si restringe.",
-            "L'oggetto diventa più pesante."
-          ],
-          correct: 2,
-          explanation:
-            "Raffreddare causa un restringimento: le particelle si avvicinano tra loro."
-        },
-        {
-          question:
-            "Le particelle fondamentali della materia si chiamano Atomi. Quali di queste particelle non variano mai per un certo elemento?",
-          choices: ["Elettroni.", "Neutroni.", "Protoni.", "Ioni."],
-          correct: 2,
-          explanation:
-            "Il numero di protoni (Numero Atomico Z) è fisso e identifica in modo univoco l'elemento."
-        },
-        {
-          question:
-            "Un Miscuglio Omogeneo (o Soluzione) come l'acqua e sale, all'occhio appare come:",
-          choices: [
-            "Due strati separati.",
-            "Un'unica cosa (non vedi i singoli componenti).",
-            "Un solido.",
-            "Un elemento chimico."
-          ],
-          correct: 1,
-          explanation:
-            "Nelle soluzioni i componenti non sono distinguibili: si osserva un'unica fase uniforme."
-        },
-        {
-          question:
-            "Il nucleo dell'atomo contiene protoni e neutroni. Gli elettroni dove si trovano?",
-          choices: [
-            "Non esistono.",
-            "Sono dentro il nucleo.",
-            "Ruotano velocemente intorno al nucleo.",
-            "Si toccano con gli elettroni degli altri atomi."
-          ],
-          correct: 2,
-          explanation:
-            "Gli elettroni si muovono rapidamente intorno al nucleo, occupando gli orbitali."
-        },
-        {
-          question:
-            "I chimici usano l'acronimo CHOMPS per ricordare sei elementi fondamentali per la vita. Qual è l'elemento 're della vita'?",
-          choices: ["Carbonio.", "Cloro.", "Calcio.", "Rame."],
-          correct: 0,
-          explanation:
-            "La vita sul pianeta si è organizzata intorno all'elemento Carbonio (C)."
-        },
-        {
-          question:
-            "Se una Sostanza Pura è formata dall'unione di due o più Elementi, viene chiamata:",
-          choices: ["Miscuglio.", "Elemento.", "Composto Chimico.", "Soluzione."],
-          correct: 2,
-          explanation:
-            "Un composto chimico è una sostanza pura composta da due o più elementi combinati chimicamente."
-        },
-        {
-          question:
-            "Quale metodo di separazione, paragonato a una decantazione accelerata, utilizza la forza centrifuga?",
-          choices: ["Filtrazione.", "Centrifugazione.", "Distillazione.", "Decantazione."],
-          correct: 1,
-          explanation:
-            "La centrifugazione accelera la decantazione sfruttando la forza centrifuga per separare rapidamente componenti con densità diverse."
-        },
-        {
-          question:
-            "L'atomo di Ferro (Fe) è un elemento. Di quanti tipi di atomi è fatta una barretta di Ferro?",
-          choices: [
-            "Diversi tipi di atomi.",
-            "Nessun atomo.",
-            "Solo atomi tutti uguali di Ferro.",
-            "Solo molecole."
-          ],
-          correct: 2,
-          explanation:
-            "Un elemento è costituito esclusivamente da atomi uguali dello stesso elemento."
-        },
-        {
-          question:
-            "Se un atomo neutro perde elettroni, che tipo di carica avrà lo ione risultante?",
-          choices: ["Neutra.", "Positiva (Catione).", "Negativa (Anione).", "Non può succedere."],
-          correct: 1,
-          explanation:
-            "Perdendo cariche negative (elettroni) l'atomo presenta un eccesso di cariche positive e diventa un catione."
-        },
-        {
-          question:
-            "L'Idrogeno è l'elemento con Numero Atomico 1 ed è un gas. Nonostante sia a sinistra della Tavola Periodica è un:",
-          choices: ["Gas nobile.", "Non Metallo.", "Semimetallo.", "Metallo liquido."],
-          correct: 1,
-          explanation:
-            "L'idrogeno è un non metallo ed è un gas che necessita di pressione e raffreddamento per liquefarsi."
-        },
-        {
-          question:
-            "Quale caratteristica fisica sfruttano i metodi di Distillazione per separare i componenti?",
-          choices: ["La stratificazione.", "La dimensione.", "La volatilità (punti di ebollizione).", "La forza di gravità."],
-          correct: 2,
-          explanation:
-            "La distillazione si basa sulla diversa volatilità, ossia sui differenti punti di ebollizione delle sostanze."
-        },
-        {
-          question:
-            "L'atomo è fatto di particelle, ma la sua struttura è per la maggior parte:",
-          choices: ["Piena di molecole.", "Piena di acqua.", "Vuota (spazio vuoto).", "Piena di legami chimici."],
-          correct: 2,
-          explanation:
-            "Gli atomi sono quasi del tutto vuoti: la massa è concentrata nel nucleo e c'è spazio vuoto attorno."
-        },
-        {
-          question:
-            "Gli ioni che formano i sali disciolti in acqua sono presenti in quale forma?",
-          choices: ["Solida.", "Ionica (come ioni).", "Neutra.", "Gassosa."],
-          correct: 1,
-          explanation:
-            "In soluzione, i sali sono presenti come ioni caricati positivamente (cationi) e negativamente (anioni)."
-        }
-      ],
-      medio: [
-        {
-          question:
-            "Se una porzione di materia non può essere scomposta con metodi fisici, ma può esserlo tramite reazioni chimiche, come viene classificata?",
-          choices: ["Elemento.", "Miscuglio eterogeneo.", "Composto chimico.", "Miscuglio omogeneo."],
-          correct: 2,
-          explanation:
-            "Una sostanza non separabile fisicamente ma scomponibile chimicamente è un composto chimico."
-        },
-        {
-          question:
-            "Quale informazione fondamentale fornisce il Numero Atomico (Z)?",
-          choices: [
-            "Il Numero di Massa (A).",
-            "Il numero di protoni.",
-            "Il numero totale di elettroni.",
-            "Il numero di neutroni."
-          ],
-          correct: 1,
-          explanation:
-            "Il numero atomico indica il numero di protoni, che non varia e identifica l'elemento."
-        },
-        {
-          question:
-            "Perché filtrando acqua salata non si separa il sale dall'acqua?",
-          choices: [
-            "Il sale è troppo pesante.",
-            "La decantazione è il metodo corretto.",
-            "Il sale è più volatile.",
-            "Le particelle sono troppo piccole e passano attraverso i pori del filtro."
-          ],
-          correct: 3,
-          explanation:
-            "In una soluzione le particelle sono a livello ultramicroscopico e attraversano il filtro perché troppo piccole."
-        },
-        {
-          question:
-            "Quale principio permette la separazione tramite distillazione di un miscuglio omogeneo?",
-          choices: [
-            "Il miscuglio è reversibile.",
-            "La materia è fatta di atomi.",
-            "Ogni sostanza pura ha un proprio punto di ebollizione (diversa volatilità).",
-            "I legami chimici sono fortissimi."
-          ],
-          correct: 2,
-          explanation:
-            "La distillazione sfrutta i diversi punti di ebollizione delle sostanze pure presenti nella soluzione."
-        },
-        {
-          question:
-            "Un atomo con Z = 17 e A = 35 ha carica -1. Quanti elettroni possiede?",
-          choices: ["17", "18", "35", "16"],
-          correct: 1,
-          explanation:
-            "Lo ione possiede un elettrone in più rispetto all'atomo neutro: 17 protoni + 1 = 18 elettroni."
-        },
-        {
-          question:
-            "Qual è il paradosso della materia derivato dalla struttura atomica?",
-          choices: [
-            "L'atomo è più grande della molecola.",
-            "La materia è piena ma l'atomo è quasi vuoto.",
-            "I non metalli sono ottimi conduttori.",
-            "I protoni variano."
-          ],
-          correct: 1,
-          explanation:
-            "La materia appare piena ma gli atomi che la compongono sono strutture prevalentemente vuote."
-        },
-        {
-          question:
-            "Perché la centrifugazione è una decantazione accelerata?",
-          choices: [
-            "Sfrutta il calore.",
-            "Utilizza la forza centrifuga per separare velocemente particelle con densità diverse.",
-            "Usa filtri.",
-            "Non sfrutta la densità."
-          ],
-          correct: 1,
-          explanation:
-            "La forza centrifuga sostituisce la lenta azione della gravità, velocizzando la stratificazione per densità."
-        },
-        {
-          question:
-            "Due isotopi dello stesso elemento hanno:",
-          choices: [
-            "Diverso Z e proprietà chimiche diverse.",
-            "Stesso A e stessi neutroni.",
-            "Stesso Z e stesse proprietà chimiche, ma diverso A.",
-            "Diverso numero di protoni ed elettroni."
-          ],
-          correct: 2,
-          explanation:
-            "Gli isotopi condividono il numero atomico e quindi le proprietà chimiche, ma differiscono per il numero di neutroni (A)."
-        },
-        {
-          question:
-            "Perché l'acqua potabile è un miscuglio mentre l'acqua distillata è una sostanza pura?",
-          choices: [
-            "L'acqua distillata è un elemento.",
-            "L'acqua potabile è un composto.",
-            "L'acqua potabile contiene sali e gas disciolti, l'acqua distillata solo molecole di H₂O.",
-            "L'acqua potabile è neutra."
-          ],
-          correct: 2,
-          explanation:
-            "L'acqua potabile è una soluzione con sali, gas e microrganismi disciolti, mentre l'acqua distillata contiene solo H₂O."
-        },
-        {
-          question:
-            "I metalli tendono a perdere elettroni formando cationi. Qual è la configurazione di Na⁺?",
-          choices: [
-            "11 protoni e 12 elettroni.",
-            "12 protoni e 11 elettroni.",
-            "11 protoni e 10 elettroni.",
-            "10 protoni e 11 elettroni."
-          ],
-          correct: 2,
-          explanation:
-            "Il sodio mantiene 11 protoni ma perde un elettrone, rimanendone con 10."
-        },
-        {
-          question:
-            "Perché gli atomi di un solido non si toccano nonostante la compattezza?",
-          choices: [
-            "Il solido è vuoto.",
-            "Le particelle sono lontane.",
-            "Gli elettroni si respingono ma i legami chimici sono forti e tengono insieme la struttura.",
-            "I neutroni si annullano."
-          ],
-          correct: 2,
-          explanation:
-            "La repulsione tra elettroni impedisce il contatto diretto, mentre i legami chimici mantengono compatta la struttura."
-        },
-        {
-          question:
-            "Raffreddando e comprimendo un gas, in quale stato tende a trasformarsi?",
-          choices: ["Solido.", "Liquido.", "Aeriforme.", "Ionico."],
-          correct: 1,
-          explanation:
-            "Raffreddamento e pressione avvicinano le particelle, favorendo il passaggio allo stato liquido."
-        },
-        {
-          question:
-            "Qual è la differenza principale tra distillazione semplice e frazionata?",
-          choices: [
-            "La semplice è per miscugli eterogenei.",
-            "La frazionata è solo per l'acqua.",
-            "La frazionata separa componenti con punti di ebollizione molto vicini (meno di 25°C).",
-            "La semplice separa solidi da gas."
-          ],
-          correct: 2,
-          explanation:
-            "La distillazione frazionata è usata quando le temperature di ebollizione dei componenti sono ravvicinate."
-        },
-        {
-          question:
-            "Se in un atomo varia il numero di neutroni, cosa cambia?",
-          choices: [
-            "Cambia Z.",
-            "Cambia il Numero di Massa (A) ma restano invariati Z e le proprietà chimiche.",
-            "Cambia la carica.",
-            "Cambia il simbolo chimico."
-          ],
-          correct: 1,
-          explanation:
-            "Variare i neutroni crea isotopi: A cambia, ma Z e le proprietà chimiche restano uguali."
-        },
-        {
-          question:
-            "Quale proprietà fisica sfruttano in comune decantazione e centrifugazione?",
-          choices: ["Volatilità.", "Densità.", "Dimensione dei pori.", "Carica elettrica."],
-          correct: 1,
-          explanation:
-            "Entrambi i metodi separano componenti con densità diverse; cambia solo la forza applicata."
-        },
-        {
-          question:
-            "Perché un elemento è costituito da atomi tutti uguali?",
-          choices: [
-            "Perché hanno gli stessi neutroni.",
-            "Perché formano un composto.",
-            "Perché hanno lo stesso Numero Atomico (Z).",
-            "Perché hanno le stesse proprietà fisiche."
-          ],
-          correct: 2,
-          explanation:
-            "Gli atomi di un elemento condividono lo stesso numero di protoni e quindi lo stesso numero atomico."
-        },
-        {
-          question:
-            "Quale particella può essere ceduta o acquistata da un atomo trasformandolo in uno ione senza mutarne l'identità chimica?",
-          choices: ["Protone.", "Elettrone.", "Neutrone.", "Fotone."],
-          correct: 1,
-          explanation:
-            "Solo gli elettroni possono variare senza modificare il numero atomico e quindi l'elemento."
-        },
-        {
-          question:
-            "Quale elemento rappresenta il 're della vita' nell'acronimo CHOMPS?",
-          choices: ["Ossigeno.", "Idrogeno.", "Fosforo.", "Carbonio."],
-          correct: 3,
-          explanation:
-            "Il Carbonio è l'elemento centrale attorno al quale si organizzano le molecole della vita."
-        },
-        {
-          question:
-            "Cosa accade agli ioni quando un sale come NaCl si scioglie in acqua?",
-          choices: [
-            "Scompaiono.",
-            "Formano molecole neutre.",
-            "Restano in soluzione come cationi e anioni.",
-            "Diventano isotopi."
-          ],
-          correct: 2,
-          explanation:
-            "I composti ionici in soluzione si dissociano in ioni positivi e negativi."
-        },
-        {
-          question:
-            "Quale caratteristica fisica distingue nettamente metalli e non metalli?",
-          choices: [
-            "I metalli sono gassosi.",
-            "Entrambi sono fragili.",
-            "I metalli sono duttili e ottimi conduttori, i non metalli sono opachi e fragili.",
-            "I non metalli sono lucenti."
-          ],
-          correct: 2,
-          explanation:
-            "I metalli sono lucenti, duttili e conduttori, mentre i non metalli sono opachi e poco conduttivi."
-        }
-      ],
-      difficile: [
-        {
-          question:
-            "Se una porzione di materia non è scomponibile tramite evaporazione ma lo è tramite elettrolisi, come si classifica?",
-          choices: [
-            "Miscuglio omogeneo.",
-            "Elemento.",
-            "Composto chimico.",
-            "Sostanza pura non classificabile."
-          ],
-          correct: 2,
-          explanation:
-            "Non essendo separabile fisicamente ma decomposta chimicamente, è un composto chimico."
-        },
-        {
-          question:
-            "Un atomo neutro con Z = 15 e A = 31 contiene:",
-          choices: [
-            "15 elettroni e 31 protoni.",
-            "16 protoni e 15 elettroni.",
-            "Massa concentrata negli elettroni.",
-            "15 protoni e 16 neutroni."
-          ],
-          correct: 3,
-          explanation:
-            "Gli elettroni sono 15 (come i protoni), i neutroni si ottengono da A − Z = 16."
-        },
-        {
-          question:
-            "Perché la decantazione semplice è poco efficiente con particelle molto piccole?",
-          choices: [
-            "Richiede temperature elevate.",
-            "Si affida alla lenta forza di gravità e richiede lunghi tempi di riposo.",
-            "Non sfrutta la densità.",
-            "È adatta solo alle soluzioni."
-          ],
-          correct: 1,
-          explanation:
-            "La sola gravità impiega molto tempo a separare particelle piccole; la centrifugazione accelera il processo."
-        },
-        {
-          question:
-            "Il principio della repulsione degli elettroni e i legami chimici forti spiegano:",
-          choices: [
-            "La separazione acqua-sale.",
-            "La differenza tra isotopi.",
-            "Perché non attraversiamo i solidi pur non toccando gli atomi.",
-            "La formazione degli ioni."
-          ],
-          correct: 2,
-          explanation:
-            "Le nostre mani non attraversano i solidi perché gli elettroni si respingono e i legami chimici mantengono la struttura."
-        },
-        {
-          question:
-            "Un composto ionico sciolto in acqua sarà presente come:",
-          choices: [
-            "Atomi neutri.",
-            "Molecole intatte.",
-            "Ioni cationi e anioni.",
-            "Protoni e neutroni liberi."
-          ],
-          correct: 2,
-          explanation:
-            "In soluzione gli ioni restano separati come specie cariche positive e negative."
-        },
-        {
-          question:
-            "Nella specie ⁴⁰₂₀Ca²⁺ quanti protoni, neutroni ed elettroni sono presenti?",
-          choices: [
-            "Protoni 20, neutroni 20, elettroni 22.",
-            "Protoni 20, neutroni 20, elettroni 18.",
-            "Protoni 22, neutroni 18, elettroni 20.",
-            "Protoni 20, neutroni 40, elettroni 20."
-          ],
-          correct: 1,
-          explanation:
-            "Z = 20 → protoni 20. Neutroni = 40 − 20 = 20. Carica +2 → ha perso due elettroni, quindi 18."
-        },
-        {
-          question:
-            "Perché è essenziale conoscere la dimensione delle particelle prima di scegliere un filtro?",
-          choices: [
-            "Per la volatilità.",
-            "Per calcolare la densità.",
-            "Perché i pori devono essere più piccoli delle particelle da trattenere.",
-            "Perché conta solo la carica."
-          ],
-          correct: 2,
-          explanation:
-            "La filtrazione funziona solo se i pori del filtro trattengono le particelle solide da separare."
-        },
-        {
-          question:
-            "Il Carbonio-14 ha le stesse proprietà chimiche del Carbonio-12 perché:",
-          choices: [
-            "Il Numero Atomico diventa 8.",
-            "Ha più neutroni quindi cambia chimicamente.",
-            "Condivide lo stesso Numero Atomico e quindi la stessa configurazione elettronica.",
-            "È un composto chimico."
-          ],
-          correct: 2,
-          explanation:
-            "Gli isotopi hanno uguale numero di protoni ed elettroni, quindi reagiscono chimicamente nello stesso modo."
-        },
-        {
-          question:
-            "Perché l'idrogeno è considerato un'anomalia nella tavola periodica?",
-          choices: [
-            "È un metallo liquido.",
-            "È un semimetallo.",
-            "È un non metallo gassoso che richiede pressione e freddo per liquefarsi.",
-            "Ha Z = 1 ed è il re della vita."
-          ],
-          correct: 2,
-          explanation:
-            "Pur trovandosi a sinistra, l'idrogeno è un gas non metallico che tende ad espandersi."
-        },
-        {
-          question:
-            "Qual è la relazione corretta tra elemento e composto?",
-          choices: [
-            "Un composto è parte di un elemento.",
-            "Entrambi sono miscugli eterogenei.",
-            "L'elemento non è scomponibile, il composto è formato da più elementi separabili chimicamente.",
-            "Entrambi si separano fisicamente."
-          ],
-          correct: 2,
-          explanation:
-            "Gli elementi sono indivisibili chimicamente, mentre i composti sono combinazioni di elementi separabili tramite reazioni."
-        },
-        {
-          question:
-            "Quando è necessaria la distillazione frazionata?",
-          choices: [
-            "Per miscugli eterogenei.",
-            "Per accelerare con forza centrifuga.",
-            "Quando i punti di ebollizione dei componenti differiscono di meno di 25°C.",
-            "Quando i componenti non sono volatili."
-          ],
-          correct: 2,
-          explanation:
-            "Temperature di ebollizione molto vicine richiedono colonne frazionate per separare efficacemente le componenti."
-        },
-        {
-          question:
-            "Come si risolve il contrasto tra studio microscopico della chimica e proprietà macroscopiche degli elementi?",
-          choices: [
-            "Tutte le proprietà macroscopiche appartengono al singolo atomo.",
-            "La tavola non contiene proprietà dello stato fisico.",
-            "Le proprietà macroscopiche derivano da tantissimi atomi, mentre la tavola indica anche le proprietà chimiche del singolo atomo.",
-            "Le proprietà chimiche e fisiche coincidono sempre."
-          ],
-          correct: 2,
-          explanation:
-            "Le proprietà macroscopiche emergono dall'insieme di moltissimi atomi, ma la tavola descrive anche il comportamento chimico della singola specie atomica."
-        },
-        {
-          question:
-            "Se un atomo di carbonio acquisisce quattro elettroni diventando C⁴⁻, quale affermazione è falsa?",
-          choices: [
-            "È un anione.",
-            "Il Numero Atomico resta 6.",
-            "Possiede 10 elettroni.",
-            "È cambiato il Numero di Massa (A)."
-          ],
-          correct: 3,
-          explanation:
-            "Il Numero di Massa dipende da protoni e neutroni, che non sono variati."
-        },
-        {
-          question:
-            "Quando è preferibile la centrifugazione rispetto alla decantazione?",
-          choices: [
-            "Quando il miscuglio è omogeneo.",
-            "Quando i componenti hanno la stessa densità.",
-            "Quando la separazione per densità è troppo lenta o insufficiente con la sola gravità.",
-            "Quando i componenti hanno diversi punti di ebollizione."
-          ],
-          correct: 2,
-          explanation:
-            "La centrifugazione si usa quando serve accelerare o rendere efficace la separazione basata sulla densità."
-        },
-        {
-          question:
-            "Perché l'acqua distillata è classificata come sostanza pura mentre l'acqua potabile come miscuglio?",
-          choices: [
-            "Perché l'acqua distillata è un elemento.",
-            "Perché l'acqua potabile è un composto.",
-            "Perché nell'acqua potabile i sali e i gas disciolti possono essere separati fisicamente, cosa impossibile nell'acqua distillata.",
-            "Perché l'evaporazione è irreversibile."
-          ],
-          correct: 2,
-          explanation:
-            "L'acqua potabile contiene soluti separabili fisicamente, mentre l'acqua distillata è un composto puro (H₂O)."
-        },
-        {
-          question:
-            "Perché la definizione di molecola è cruciale per la chimica?",
-          choices: [
-            "Un composto può essere un solo atomo.",
-            "Le proprietà chimiche di un composto derivano dal raggruppamento specifico di atomi che lo costituiscono.",
-            "Tutte le molecole hanno formule identiche.",
-            "La molecola ha lo stesso numero di protoni dell'atomo."
-          ],
-          correct: 1,
-          explanation:
-            "La molecola è la più piccola parte di un composto che ne conserva le proprietà chimiche, distinguendola dal singolo atomo."
-        },
-        {
-          question:
-            "Quale fenomeno non dipende dalla dilatazione o restringimento delle particelle?",
-          choices: [
-            "Passaggio liquido-gas.",
-            "Liquefazione di un gas.",
-            "Separazione di olio e acqua per densità.",
-            "Raffreddamento di un oggetto."
-          ],
-          correct: 2,
-          explanation:
-            "La separazione olio-acqua dipende dalla diversa densità e dall'azione della gravità, non da variazioni termiche."
-        },
-        {
-          question:
-            "Come si distribuisce la massa totale di un atomo nella sua struttura?",
-          choices: [
-            "Uniformemente tra elettroni e nucleo.",
-            "In modo compatto nell'intero volume.",
-            "È concentrata quasi esclusivamente nel nucleo, anche se l'atomo è quasi vuoto.",
-            "Dipende solo da Z."
-          ],
-          correct: 2,
-          explanation:
-            "La massa atomica risiede quasi interamente in protoni e neutroni nel nucleo."
-        },
-        {
-          question:
-            "Quale particella subatomica può variare modificando il Numero di Massa ma non l'identità chimica?",
-          choices: ["Protone.", "Elettrone.", "Neutrone.", "Ione."],
-          correct: 2,
-          explanation:
-            "Variare il numero di neutroni cambia il Numero di Massa (A) senza alterare Z; si ottengono isotopi."
-        },
-        {
-          question:
-            "Cosa implica il fatto che CHOMPS descriva il 99% della materia vivente?",
-          choices: [
-            "Che tutti gli elementi sono necessari per la vita.",
-            "Che gli elementi CHOMPS sono miscugli omogenei.",
-            "Che pochi elementi, guidati dal carbonio, bastano a creare la complessità della vita.",
-            "Che solo CHOMPS forma ioni."
-          ],
-          correct: 2,
-          explanation:
-            "La vita si basa su una combinazione limitata di elementi, evidenziando il ruolo centrale del carbonio."
-        }
-      ]
-    };
-
-    const difficultyButtons = document.querySelectorAll('.difficulty-selector button');
-    const questionEl = document.getElementById('question');
-    const optionsEl = document.getElementById('options');
-    const feedbackEl = document.getElementById('feedback');
-    const progressEl = document.getElementById('progress');
-    const scoreEl = document.getElementById('score');
-    const nextBtn = document.getElementById('next');
-    const restartBtn = document.getElementById('restart');
-    const summaryEl = document.getElementById('summary');
-
-    let state = {
-      level: null,
-      questions: [],
-      currentIndex: 0,
-      score: 0,
-      answered: false
-    };
-
-    function resetButtons() {
-      difficultyButtons.forEach((btn) => btn.classList.remove('active'));
-    }
-
-    function updateMeta() {
-      progressEl.textContent = `Domanda ${state.questions.length ? state.currentIndex + 1 : 0} / ${state.questions.length}`;
-      scoreEl.textContent = `Punteggio: ${state.score}`;
-    }
-
-    function renderQuestion() {
-      const current = state.questions[state.currentIndex];
-      if (!current) {
-        questionEl.textContent = 'Seleziona un livello per iniziare.';
-        optionsEl.innerHTML = '';
-        feedbackEl.className = 'feedback';
-        feedbackEl.textContent = '';
-        nextBtn.disabled = true;
-        restartBtn.disabled = true;
-        summaryEl.classList.remove('visible');
-        summaryEl.textContent = '';
-        updateMeta();
-        return;
+        border: none;
+        border-radius: 14px;
+        padding: 12px 20px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
       }
 
-      questionEl.textContent = current.question;
-      optionsEl.innerHTML = '';
-      feedbackEl.className = 'feedback';
-      feedbackEl.textContent = '';
-      state.answered = false;
-      nextBtn.disabled = true;
-
-      current.choices.forEach((choice, index) => {
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.className = 'option';
-        button.textContent = choice;
-        button.dataset.index = index;
-        button.addEventListener('click', () => handleAnswer(button, index));
-        optionsEl.appendChild(button);
-      });
-
-      updateMeta();
-    }
-
-    function handleAnswer(button, index) {
-      if (state.answered) return;
-      const current = state.questions[state.currentIndex];
-      const options = Array.from(optionsEl.querySelectorAll('.option'));
-      const isCorrect = index === current.correct;
-      state.answered = true;
-
-      if (isCorrect) {
-        state.score += 1;
-        feedbackEl.className = 'feedback visible positive';
-        feedbackEl.textContent = `Corretto! ${current.explanation}`;
-      } else {
-        feedbackEl.className = 'feedback visible negative';
-        feedbackEl.textContent = `Risposta errata. ${current.explanation}`;
+      .controls button.primary {
+        background: var(--accent);
+        color: white;
+        box-shadow: 0 16px 40px rgba(37, 99, 235, 0.25);
       }
 
-      options.forEach((opt, idx) => {
-        opt.disabled = true;
-        if (idx === current.correct) {
-          opt.classList.add('correct');
-        } else if (idx === index) {
-          opt.classList.add('wrong');
+      .controls button.primary:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        box-shadow: none;
+      }
+
+      .controls button.secondary {
+        background: var(--accent-soft);
+        color: var(--accent);
+      }
+
+      .controls button:hover:not(:disabled),
+      .controls button:focus-visible:not(:disabled) {
+        outline: none;
+        transform: translateY(-1px);
+        box-shadow: 0 18px 40px rgba(37, 99, 235, 0.2);
+      }
+
+      .score-panel {
+        border-radius: 22px;
+        padding: clamp(20px, 4vw, 36px);
+        background: linear-gradient(160deg, rgba(37, 99, 235, 0.1), rgba(59, 130, 246, 0.05));
+        border: 1px solid rgba(37, 99, 235, 0.2);
+        display: grid;
+        gap: 12px;
+      }
+
+      .score-panel h2 {
+        margin: 0;
+        font-size: clamp(1.4rem, 3vw, 1.7rem);
+      }
+
+      .score-details {
+        display: grid;
+        gap: 8px;
+        color: var(--muted);
+      }
+
+      .hidden {
+        display: none !important;
+      }
+
+      @media (max-width: 720px) {
+        body {
+          padding: 16px;
         }
-      });
 
-      nextBtn.disabled = state.currentIndex === state.questions.length - 1;
-      restartBtn.disabled = false;
-      updateMeta();
+        .app {
+          border-radius: 18px;
+          padding: 20px;
+        }
 
-      if (state.currentIndex === state.questions.length - 1) {
-        showSummary();
+        .quiz-card {
+          border-radius: 18px;
+        }
       }
-    }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <header>
+        <h1>Quiz di Chimica Multilivello</h1>
+        <p class="lead">
+          Scegli il livello di difficoltà, rispondi alle domande e ricevi subito il feedback con spiegazione dettagliata.
+        </p>
+      </header>
 
-    function showSummary() {
-      summaryEl.classList.add('visible');
-      summaryEl.innerHTML = `
-        <h3>Quiz completato!</h3>
-        <p>Hai ottenuto <strong>${state.score}</strong> punti su ${state.questions.length}.</p>
-        <p>${getFeedbackMessage()}</p>
-      `;
-    }
+      <section class="difficulty-panel">
+        <h2>1. Scegli il livello</h2>
+        <div class="difficulty-buttons" role="group" aria-label="Selezione livello">
+          <button type="button" data-level="base">Livello Base</button>
+          <button type="button" data-level="easy">Super Facile</button>
+          <button type="button" data-level="medium">Medio</button>
+          <button type="button" data-level="hard">Difficile</button>
+        </div>
+      </section>
 
-    function getFeedbackMessage() {
-      const ratio = state.score / state.questions.length;
-      if (ratio === 1) return 'Perfetto! Conosci la materia in modo impeccabile.';
-      if (ratio >= 0.75) return 'Ottimo lavoro! Continua così per diventare un maestro della chimica.';
-      if (ratio >= 0.5) return 'Buon risultato! Ripassa gli argomenti meno chiari e riprova.';
-      return 'Non scoraggiarti: rileggi le spiegazioni e fai un altro tentativo.';
-    }
+      <section class="quiz-card hidden" id="quizCard" aria-live="polite">
+        <div class="meta">
+          <span id="questionCounter"></span>
+          <span id="scoreCounter"></span>
+        </div>
+        <div class="question-text" id="questionText"></div>
+        <div class="options" id="options" role="list"></div>
+        <div class="feedback" id="feedback"></div>
+        <div class="controls">
+          <button type="button" class="secondary" id="resetButton">Cambia livello</button>
+          <button type="button" class="primary" id="nextButton" disabled>Avanti</button>
+        </div>
+      </section>
 
-    function loadLevel(levelKey) {
-      state = {
-        level: levelKey,
-        questions: [...quizData[levelKey]],
-        currentIndex: 0,
-        score: 0,
-        answered: false
+      <section class="score-panel hidden" id="scorePanel">
+        <h2>Risultato finale</h2>
+        <div class="score-details">
+          <p id="finalScore"></p>
+          <p id="finalAccuracy"></p>
+          <p id="finalSummary"></p>
+        </div>
+        <div class="controls">
+          <button type="button" class="primary" id="restartButton">Riprova lo stesso livello</button>
+          <button type="button" class="secondary" id="chooseButton">Scegli un altro livello</button>
+        </div>
+      </section>
+    </div>
+
+    <script>
+      const questionBank = {
+        base: [
+          {
+            question: "Qual è il criterio fondamentale per distinguere un Miscuglio da una Sostanza Pura?",
+            answers: [
+              { label: "A", text: "Se può essere scomposta mediante reazioni chimiche", correct: false },
+              { label: "B", text: "Se possiede massa e occupa un volume", correct: false },
+              { label: "C", text: "Se può essere scomposta mediante metodi fisici", correct: true },
+              { label: "D", text: "Se i suoi componenti sono visibilmente distinguibili", correct: false }
+            ],
+            explanation:
+              "Un miscuglio può essere separato in componenti più semplici tramite metodi fisici, a differenza di una sostanza pura."
+          },
+          {
+            question: "Cosa rappresenta il Numero Atomico (Z) di un elemento chimico?",
+            answers: [
+              { label: "A", text: "Il numero di elettroni", correct: false },
+              { label: "B", text: "Il numero di neutroni", correct: false },
+              { label: "C", text: "Il numero di protoni", correct: true },
+              { label: "D", text: "La somma di protoni ed elettroni", correct: false }
+            ],
+            explanation:
+              "Il numero atomico identifica in modo univoco un elemento perché corrisponde al numero di protoni nel nucleo."
+          },
+          {
+            question: "Un Miscuglio Omogeneo è caratterizzato da:",
+            answers: [
+              { label: "A", text: "Componenti visibilmente separati", correct: false },
+              { label: "B", text: "Essere scomposto solo con metodi chimici", correct: false },
+              { label: "C", text: "Essere formato da un solo tipo di atomi", correct: false },
+              { label: "D", text: "Apparire come un'unica fase indistinguibile", correct: true }
+            ],
+            explanation:
+              "Le soluzioni omogenee appaiono uniformi: i componenti non sono più distinguibili a occhio nudo."
+          },
+          {
+            question: "La Filtrazione sfrutta la differenza di quale proprietà?",
+            answers: [
+              { label: "A", text: "Volatilità", correct: false },
+              { label: "B", text: "Densità", correct: false },
+              { label: "C", text: "Dimensione delle particelle", correct: true },
+              { label: "D", text: "Carica elettrica", correct: false }
+            ],
+            explanation:
+              "Un filtro trattiene le particelle più grandi e lascia passare quelle più piccole."
+          },
+          {
+            question: "La Molecola è definita come:",
+            answers: [
+              { label: "A", text: "La più piccola parte di un elemento", correct: false },
+              { label: "B", text: "L'insieme degli isotopi di un elemento", correct: false },
+              { label: "C", text: "La più piccola parte di un composto che ne conserva le proprietà chimiche", correct: true },
+              { label: "D", text: "La combinazione di un catione e un anione", correct: false }
+            ],
+            explanation:
+              "La molecola mantiene le proprietà del composto di cui è costituita."
+          },
+          {
+            question: "Quale metodo è paragonato a una decantazione accelerata dalla forza centrifuga?",
+            answers: [
+              { label: "A", text: "Decantazione", correct: false },
+              { label: "B", text: "Distillazione", correct: false },
+              { label: "C", text: "Centrifugazione", correct: true },
+              { label: "D", text: "Filtrazione", correct: false }
+            ],
+            explanation:
+              "La centrifugazione sfrutta la forza centrifuga per separare rapidamente componenti di diversa densità."
+          },
+          {
+            question: "In un atomo neutro il numero di elettroni è uguale al numero di:",
+            answers: [
+              { label: "A", text: "Neutroni", correct: false },
+              { label: "B", text: "Numero di massa (A)", correct: false },
+              { label: "C", text: "Protoni", correct: true },
+              { label: "D", text: "Isotopi", correct: false }
+            ],
+            explanation:
+              "La neutralità richiede che le cariche negative degli elettroni bilancino le cariche positive dei protoni."
+          },
+          {
+            question: "Quale caratteristica sfruttano distillazione semplice e frazionata?",
+            answers: [
+              { label: "A", text: "Dimensione delle particelle", correct: false },
+              { label: "B", text: "Densità", correct: false },
+              { label: "C", text: "Diversa volatilità o punti di ebollizione", correct: true },
+              { label: "D", text: "Forza di gravità", correct: false }
+            ],
+            explanation:
+              "Ogni sostanza pura possiede un punto di ebollizione caratteristico sfruttato dalla distillazione."
+          },
+          {
+            question: "Gli elementi a sinistra della diagonale della Tavola Periodica sono per lo più:",
+            answers: [
+              { label: "A", text: "Non metalli", correct: false },
+              { label: "B", text: "Semimetalli", correct: false },
+              { label: "C", text: "Metalli", correct: true },
+              { label: "D", text: "Gas nobili", correct: false }
+            ],
+            explanation:
+              "I metalli sono lucenti, solidi (salvo eccezioni) e ottimi conduttori di calore ed elettricità."
+          },
+          {
+            question: "Un atomo che diventa anione ha:",
+            answers: [
+              { label: "A", text: "Un protone in più", correct: false },
+              { label: "B", text: "Un protone in meno", correct: false },
+              { label: "C", text: "Elettroni in più", correct: true },
+              { label: "D", text: "Elettroni in meno", correct: false }
+            ],
+            explanation:
+              "L'acquisto di elettroni (cariche negative) rende l'atomo complessivamente negativo."
+          },
+          {
+            question: "Cosa accade alle particelle quando si riscalda una sostanza?",
+            answers: [
+              { label: "A", text: "Si avvicinano", correct: false },
+              { label: "B", text: "Nulla", correct: false },
+              { label: "C", text: "Si allontanano (dilatazione)", correct: true },
+              { label: "D", text: "Avviene solo condensazione", correct: false }
+            ],
+            explanation:
+              "Il calore provoca dilatazione perché le particelle si allontanano aumentando l'energia cinetica."
+          },
+          {
+            question: "Gli isotopi di un elemento differiscono per il numero di:",
+            answers: [
+              { label: "A", text: "Protoni", correct: false },
+              { label: "B", text: "Neutroni", correct: true },
+              { label: "C", text: "Elettroni", correct: false },
+              { label: "D", text: "Molecole", correct: false }
+            ],
+            explanation:
+              "Gli isotopi possiedono lo stesso numero di protoni ma differiscono nel numero di neutroni."
+          },
+          {
+            question: "Qual è la definizione ufficiale di materia?",
+            answers: [
+              { label: "A", text: "Tutto ciò che è visibile", correct: false },
+              { label: "B", text: "Tutto ciò che è composto da atomi", correct: false },
+              { label: "C", text: "Tutto ciò che ha massa e occupa volume", correct: true },
+              { label: "D", text: "Tutto ciò che reagisce chimicamente", correct: false }
+            ],
+            explanation:
+              "La materia possiede massa e occupa spazio, distinguendosi dal concetto di vuoto."
+          },
+          {
+            question: "Se una sostanza pura può essere scomposta con metodi chimici, è:",
+            answers: [
+              { label: "A", text: "Un miscuglio", correct: false },
+              { label: "B", text: "Un elemento", correct: false },
+              { label: "C", text: "Un composto chimico", correct: true },
+              { label: "D", text: "Una soluzione", correct: false }
+            ],
+            explanation:
+              "I composti chimici possono essere decomposti in elementi tramite reazioni chimiche."
+          },
+          {
+            question: "Il Numero di Massa (A) corrisponde alla somma di:",
+            answers: [
+              { label: "A", text: "Elettroni e neutroni", correct: false },
+              { label: "B", text: "Elettroni e protoni", correct: false },
+              { label: "C", text: "Protoni ed elettroni", correct: false },
+              { label: "D", text: "Protoni e neutroni", correct: true }
+            ],
+            explanation:
+              "La massa dell'atomo è concentrata nel nucleo, formato da protoni e neutroni."
+          },
+          {
+            question: "A quale livello la chimica studia la materia?",
+            answers: [
+              { label: "A", text: "Macroscopico", correct: false },
+              { label: "B", text: "Microscopico o ultramicroscopico", correct: true },
+              { label: "C", text: "Livello elementare", correct: false },
+              { label: "D", text: "Livello ionico", correct: false }
+            ],
+            explanation:
+              "La chimica indaga cosa accade all'interno della materia osservando atomi e molecole."
+          },
+          {
+            question: "La decantazione si basa su quale combinazione?",
+            answers: [
+              { label: "A", text: "Volatilità e calore", correct: false },
+              { label: "B", text: "Dimensione delle particelle e filtro", correct: false },
+              { label: "C", text: "Diversa densità e forza di gravità", correct: true },
+              { label: "D", text: "Forza centrifuga e dimensione", correct: false }
+            ],
+            explanation:
+              "Le particelle più dense precipitano sul fondo grazie all'azione della gravità."
+          },
+          {
+            question: "Un catione si forma quando l'atomo neutro:",
+            answers: [
+              { label: "A", text: "Acquista protoni", correct: false },
+              { label: "B", text: "Perde elettroni", correct: true },
+              { label: "C", text: "Perde neutroni", correct: false },
+              { label: "D", text: "Acquista cariche neutre", correct: false }
+            ],
+            explanation:
+              "Per diventare positivo l'atomo deve perdere elettroni, le uniche particelle che possono variare."
+          },
+          {
+            question: "Qual è una caratteristica dei non metalli solidi?",
+            answers: [
+              { label: "A", text: "Sono lucenti", correct: false },
+              { label: "B", text: "Ottimi conduttori", correct: false },
+              { label: "C", text: "Duttili e malleabili", correct: false },
+              { label: "D", text: "Opachi e fragili", correct: true }
+            ],
+            explanation:
+              "I non metalli sono l'opposto dei metalli: opachi, poco conduttori e spesso fragili."
+          },
+          {
+            question: "Nello stato aeriforme le particelle:",
+            answers: [
+              { label: "A", text: "Sono vicine con legami forti", correct: false },
+              { label: "B", text: "Sono più lontane ma legate", correct: false },
+              { label: "C", text: "Sono molto distanti e non formano legami", correct: true },
+              { label: "D", text: "Si restringono se riscaldate", correct: false }
+            ],
+            explanation:
+              "I gas tendono a occupare tutto il volume disponibile perché le particelle sono molto distanti."
+          }
+        ],
+        easy: [
+          {
+            question: "Che cos'è la Materia?",
+            answers: [
+              { label: "A", text: "Tutto ciò che è visibile", correct: false },
+              { label: "B", text: "Tutto ciò che è caldo", correct: false },
+              { label: "C", text: "Tutto ciò che ha massa e occupa spazio", correct: true },
+              { label: "D", text: "Tutto ciò che si rompe", correct: false }
+            ],
+            explanation:
+              "La materia è tutto ciò che possiede massa e occupa un volume determinato."
+          },
+          {
+            question: "Nella decantazione di fango e acqua, quale forza fa scendere il fango?",
+            answers: [
+              { label: "A", text: "Forza centrifuga", correct: false },
+              { label: "B", text: "Forza di gravità", correct: true },
+              { label: "C", text: "Forza magnetica", correct: false },
+              { label: "D", text: "Forza di pressione", correct: false }
+            ],
+            explanation:
+              "La decantazione sfrutta la diversa densità delle particelle unite all'azione della gravità."
+          },
+          {
+            question: "Perché un bicchiere che sembra vuoto è in realtà pieno?",
+            answers: [
+              { label: "A", text: "È pieno di elettricità", correct: false },
+              { label: "B", text: "È pieno di aria", correct: true },
+              { label: "C", text: "È pieno di atomi visibili", correct: false },
+              { label: "D", text: "È pieno di luce", correct: false }
+            ],
+            explanation:
+              "L'aria è materia, ha massa e occupa spazio, perciò riempie gli ambienti che crediamo vuoti."
+          },
+          {
+            question: "Ferro, oro e rame sono lucenti e ottimi conduttori. Come si chiamano?",
+            answers: [
+              { label: "A", text: "Non metalli", correct: false },
+              { label: "B", text: "Gas nobili", correct: false },
+              { label: "C", text: "Metalli", correct: true },
+              { label: "D", text: "Semimetalli", correct: false }
+            ],
+            explanation:
+              "I metalli occupano la parte sinistra della tavola periodica e condividono queste proprietà."
+          },
+          {
+            question: "A quale livello studia la materia la chimica?",
+            answers: [
+              { label: "A", text: "Livello atomico/microscopico", correct: true },
+              { label: "B", text: "Livello macroscopico", correct: false },
+              { label: "C", text: "Livello visibile", correct: false },
+              { label: "D", text: "Livello sonoro", correct: false }
+            ],
+            explanation:
+              "La chimica osserva la struttura interna della materia analizzando atomi e molecole."
+          },
+          {
+            question: "Un miscuglio eterogeneo è un miscuglio in cui...",
+            answers: [
+              { label: "A", text: "I componenti non si vedono", correct: false },
+              { label: "B", text: "I componenti sono distinguibili", correct: true },
+              { label: "C", text: "È una sostanza pura", correct: false },
+              { label: "D", text: "Si separa solo per distillazione", correct: false }
+            ],
+            explanation:
+              "Nei miscugli eterogenei (es. acqua e olio) i componenti restano separati e visibili."
+          },
+          {
+            question: "Usare lo scolapasta per scolare la pasta è un esempio di:",
+            answers: [
+              { label: "A", text: "Separazione per colore", correct: false },
+              { label: "B", text: "Separazione per densità", correct: false },
+              { label: "C", text: "Filtrazione basata sulla dimensione", correct: true },
+              { label: "D", text: "Distillazione", correct: false }
+            ],
+            explanation:
+              "Lo scolapasta trattiene la pasta perché è più grande dei fori: un chiaro esempio di filtrazione."
+          },
+          {
+            question: "Cosa accade alle particelle quando raffreddi un oggetto?",
+            answers: [
+              { label: "A", text: "Nulla", correct: false },
+              { label: "B", text: "Restano ferme", correct: false },
+              { label: "C", text: "Si avvicinano e l'oggetto si restringe", correct: true },
+              { label: "D", text: "L'oggetto diventa più pesante", correct: false }
+            ],
+            explanation:
+              "Il raffreddamento provoca restringimento perché le particelle diminuiscono la distanza reciproca."
+          },
+          {
+            question: "Quali particelle identificano in modo univoco un elemento?",
+            answers: [
+              { label: "A", text: "Elettroni", correct: false },
+              { label: "B", text: "Neutroni", correct: false },
+              { label: "C", text: "Protoni", correct: true },
+              { label: "D", text: "Ioni", correct: false }
+            ],
+            explanation:
+              "Il numero di protoni (Z) non varia per un elemento: è la sua carta d'identità."
+          },
+          {
+            question: "Un miscuglio omogeneo come acqua e sale appare:",
+            answers: [
+              { label: "A", text: "Con due strati separati", correct: false },
+              { label: "B", text: "Come un'unica fase", correct: true },
+              { label: "C", text: "Come un solido", correct: false },
+              { label: "D", text: "Come un elemento chimico", correct: false }
+            ],
+            explanation:
+              "In una soluzione i componenti sono completamente miscelati e non si distinguono."
+          },
+          {
+            question: "Dove si trovano gli elettroni in un atomo?",
+            answers: [
+              { label: "A", text: "Non esistono", correct: false },
+              { label: "B", text: "Dentro il nucleo", correct: false },
+              { label: "C", text: "Ruotano intorno al nucleo", correct: true },
+              { label: "D", text: "Si toccano con altri elettroni", correct: false }
+            ],
+            explanation:
+              "Gli elettroni si muovono attorno al nucleo in orbitali, formando la nuvola elettronica."
+          },
+          {
+            question: "Qual è l'elemento 're della vita' nell'acronimo CHOMPS?",
+            answers: [
+              { label: "A", text: "Carbonio", correct: true },
+              { label: "B", text: "Cloro", correct: false },
+              { label: "C", text: "Calcio", correct: false },
+              { label: "D", text: "Rame", correct: false }
+            ],
+            explanation:
+              "La vita si è organizzata intorno all'atomo di carbonio, capace di formare numerosi legami."
+          },
+          {
+            question: "Una sostanza pura formata da due o più elementi è chiamata:",
+            answers: [
+              { label: "A", text: "Miscuglio", correct: false },
+              { label: "B", text: "Elemento", correct: false },
+              { label: "C", text: "Composto chimico", correct: true },
+              { label: "D", text: "Soluzione", correct: false }
+            ],
+            explanation:
+              "I composti chimici possono essere decomposti solo tramite reazioni chimiche."
+          },
+          {
+            question: "Quale metodo usa la forza centrifuga per accelerare la decantazione?",
+            answers: [
+              { label: "A", text: "Filtrazione", correct: false },
+              { label: "B", text: "Centrifugazione", correct: true },
+              { label: "C", text: "Distillazione", correct: false },
+              { label: "D", text: "Decantazione", correct: false }
+            ],
+            explanation:
+              "La centrifuga separa rapidamente particelle di diversa densità sfruttando una rotazione ad alta velocità."
+          },
+          {
+            question: "Quanti tipi di atomi contiene un blocco di ferro (Fe)?",
+            answers: [
+              { label: "A", text: "Diversi tipi", correct: false },
+              { label: "B", text: "Nessun atomo", correct: false },
+              { label: "C", text: "Solo atomi uguali di ferro", correct: true },
+              { label: "D", text: "Solo molecole", correct: false }
+            ],
+            explanation:
+              "Un elemento è formato esclusivamente da atomi con lo stesso numero atomico."
+          },
+          {
+            question: "Se un atomo neutro perde elettroni, che carica assume?",
+            answers: [
+              { label: "A", text: "Neutra", correct: false },
+              { label: "B", text: "Positiva (catione)", correct: true },
+              { label: "C", text: "Negativa", correct: false },
+              { label: "D", text: "Impossibile", correct: false }
+            ],
+            explanation:
+              "Perdendo cariche negative, l'atomo resta con un eccesso di carica positiva."
+          },
+          {
+            question: "Che tipo di elemento è l'idrogeno?",
+            answers: [
+              { label: "A", text: "Gas nobile", correct: false },
+              { label: "B", text: "Non metallo", correct: true },
+              { label: "C", text: "Semimetallo", correct: false },
+              { label: "D", text: "Metallo liquido", correct: false }
+            ],
+            explanation:
+              "L'idrogeno è un non metallo gassoso ed è un'eccezione nella zona dei metalli."
+          },
+          {
+            question: "La distillazione separa sostanze in base a quale proprietà?",
+            answers: [
+              { label: "A", text: "Stratificazione", correct: false },
+              { label: "B", text: "Dimensione", correct: false },
+              { label: "C", text: "Volatilità/punto di ebollizione", correct: true },
+              { label: "D", text: "Forza di gravità", correct: false }
+            ],
+            explanation:
+              "Ogni sostanza ha un proprio punto di ebollizione sfruttato dalla distillazione."
+          },
+          {
+            question: "La struttura dell'atomo è per la maggior parte:",
+            answers: [
+              { label: "A", text: "Piena di molecole", correct: false },
+              { label: "B", text: "Piena d'acqua", correct: false },
+              { label: "C", text: "Spazio vuoto", correct: true },
+              { label: "D", text: "Piena di legami", correct: false }
+            ],
+            explanation:
+              "L'atomo è quasi completamente vuoto: la massa è concentrata nel nucleo."
+          },
+          {
+            question: "In quale forma si trovano calcio e sodio disciolti in acqua?",
+            answers: [
+              { label: "A", text: "Solida", correct: false },
+              { label: "B", text: "Ionica", correct: true },
+              { label: "C", text: "Neutra", correct: false },
+              { label: "D", text: "Gassosa", correct: false }
+            ],
+            explanation:
+              "In soluzione acquosa i sali sono presenti come ioni positivi e negativi."
+          }
+        ],
+        medium: [
+          {
+            question: "Se una materia non è separabile fisicamente ma lo è chimicamente, è:",
+            answers: [
+              { label: "A", text: "Elemento", correct: false },
+              { label: "B", text: "Miscuglio eterogeneo", correct: false },
+              { label: "C", text: "Composto chimico", correct: true },
+              { label: "D", text: "Miscuglio omogeneo", correct: false }
+            ],
+            explanation:
+              "Prima si verifica se è un miscuglio; se non lo è, è sostanza pura. Se è scindibile chimicamente si tratta di un composto."
+          },
+          {
+            question: "Il numero atomico Z fornisce:",
+            answers: [
+              { label: "A", text: "Il numero di massa A", correct: false },
+              { label: "B", text: "Il numero di protoni", correct: true },
+              { label: "C", text: "Il numero totale di elettroni", correct: false },
+              { label: "D", text: "Il numero di neutroni", correct: false }
+            ],
+            explanation:
+              "Z è la carta d'identità dell'elemento e rappresenta il numero di protoni nel nucleo."
+          },
+          {
+            question: "Perché filtrare acqua salata non separa il sale?",
+            answers: [
+              { label: "A", text: "Il sale è troppo pesante", correct: false },
+              { label: "B", text: "Serve la decantazione", correct: false },
+              { label: "C", text: "Il sale è più volatile", correct: false },
+              { label: "D", text: "Le particelle in soluzione sono troppo piccole per i pori", correct: true }
+            ],
+            explanation:
+              "Nelle soluzioni le particelle sono disperse a livello molecolare e attraversano il filtro senza essere trattenute."
+          },
+          {
+            question: "Quale principio rende possibile la distillazione di una soluzione?",
+            answers: [
+              { label: "A", text: "Il miscuglio è reversibile", correct: false },
+              { label: "B", text: "La materia è fatta di atomi", correct: false },
+              { label: "C", text: "Ogni sostanza pura ha un punto di ebollizione specifico", correct: true },
+              { label: "D", text: "I legami chimici sono fortissimi", correct: false }
+            ],
+            explanation:
+              "Scaldando si raggiungono i diversi punti di ebollizione dei componenti e li si separa fisicamente."
+          },
+          {
+            question: "Un atomo con Z=17 e A=35 che è anione -1 possiede quanti elettroni?",
+            answers: [
+              { label: "A", text: "17", correct: false },
+              { label: "B", text: "18", correct: true },
+              { label: "C", text: "35", correct: false },
+              { label: "D", text: "18", correct: true }
+            ],
+            explanation:
+              "Lo stato neutro avrebbe 17 elettroni; l'anione -1 ne possiede uno in più, quindi 18 elettroni."
+          },
+          {
+            question: "Qual è il paradosso della materia rispetto alla struttura atomica?",
+            answers: [
+              { label: "A", text: "L'atomo è più grande della molecola", correct: false },
+              { label: "B", text: "La materia è piena ma l'atomo è quasi vuoto", correct: true },
+              { label: "C", text: "I non metalli conducono calore", correct: false },
+              { label: "D", text: "I protoni variano, gli elettroni no", correct: false }
+            ],
+            explanation:
+              "Percepiamo gli oggetti solidi come pieni, ma i loro atomi sono composti prevalentemente da spazio vuoto."
+          },
+          {
+            question: "Perché la centrifugazione è una decantazione accelerata?",
+            answers: [
+              { label: "A", text: "Sfrutta calore e volatilità", correct: false },
+              { label: "B", text: "Usa la forza centrifuga per separare in base alla densità", correct: true },
+              { label: "C", text: "Moltiplica la gravità per la dimensione", correct: false },
+              { label: "D", text: "Implica filtri a maglia stretta", correct: false }
+            ],
+            explanation:
+              "La forza centrifuga è molto più intensa della gravità e velocizza la stratificazione delle particelle."
+          },
+          {
+            question: "Due isotopi dello stesso elemento hanno:",
+            answers: [
+              { label: "A", text: "Diverso Z e proprietà chimiche", correct: false },
+              { label: "B", text: "Stesso A e neutroni", correct: false },
+              { label: "C", text: "Stesso Z e proprietà chimiche ma diverso A", correct: true },
+              { label: "D", text: "Diversi protoni ed elettroni", correct: false }
+            ],
+            explanation:
+              "Gli isotopi condividono numero di protoni (Z) e quindi chimica identica, ma differiscono nel numero di neutroni."
+          },
+          {
+            question: "Qual è la differenza tra acqua distillata e acqua potabile?",
+            answers: [
+              { label: "A", text: "L'acqua distillata è un elemento", correct: false },
+              { label: "B", text: "L'acqua potabile è un composto", correct: false },
+              { label: "C", text: "La distillata contiene solo H2O, la potabile sali e gas disciolti", correct: true },
+              { label: "D", text: "La potabile è fatta solo di idrogeno", correct: false }
+            ],
+            explanation:
+              "L'acqua potabile è una soluzione ionica con sali e gas; l'acqua distillata è una sostanza pura."
+          },
+          {
+            question: "I metalli tendono a perdere elettroni. Com'è un catione di sodio (Na+)?",
+            answers: [
+              { label: "A", text: "11 protoni e 12 elettroni", correct: false },
+              { label: "B", text: "12 protoni e 11 elettroni", correct: false },
+              { label: "C", text: "11 protoni e 10 elettroni", correct: true },
+              { label: "D", text: "10 protoni e 11 elettroni", correct: false }
+            ],
+            explanation:
+              "Il sodio ha 11 protoni. Per avere carica +1 perde un elettrone e ne possiede 10."
+          },
+          {
+            question: "Perché gli atomi di un solido non si toccano pur essendo compatti?",
+            answers: [
+              { label: "A", text: "Il solido è vuoto", correct: false },
+              { label: "B", text: "Le particelle sono troppo lontane", correct: false },
+              { label: "C", text: "Gli elettroni si respingono ma i legami li tengono vicini", correct: true },
+              { label: "D", text: "I neutroni si annullano", correct: false }
+            ],
+            explanation:
+              "Gli elettroni con carica negativa impediscono il contatto, mentre i legami chimici garantiscono la coesione."
+          },
+          {
+            question: "Raffreddare e comprimere un gas tende a trasformarlo in quale stato?",
+            answers: [
+              { label: "A", text: "Solido per dilatazione", correct: false },
+              { label: "B", text: "Liquido grazie al restringimento delle particelle", correct: true },
+              { label: "C", text: "Aeriforme sfruttando l'espansione", correct: false },
+              { label: "D", text: "Ionico per carica", correct: false }
+            ],
+            explanation:
+              "Per liquefare un gas è necessario avvicinare le particelle, usando bassa temperatura e pressione elevata."
+          },
+          {
+            question: "Quando si usa la distillazione frazionata invece della semplice?",
+            answers: [
+              { label: "A", text: "Per miscugli eterogenei", correct: false },
+              { label: "B", text: "Solo per l'acqua", correct: false },
+              { label: "C", text: "Quando i punti di ebollizione sono molto vicini", correct: true },
+              { label: "D", text: "Per separare solidi da gas", correct: false }
+            ],
+            explanation:
+              "Se le temperature di ebollizione differiscono di meno di 25 °C si impiega una colonna frazionata."
+          },
+          {
+            question: "Se varia il numero di neutroni in un atomo neutro, cosa cambia?",
+            answers: [
+              { label: "A", text: "Varia Z", correct: false },
+              { label: "B", text: "Varia A ma restano invariati Z e proprietà chimiche", correct: true },
+              { label: "C", text: "Varia la carica", correct: false },
+              { label: "D", text: "Cambia il simbolo chimico", correct: false }
+            ],
+            explanation:
+              "La variazione di neutroni genera isotopi: stesso elemento, differente numero di massa (A)."
+          },
+          {
+            question: "Quale proprietà sfruttano in comune decantazione e centrifugazione?",
+            answers: [
+              { label: "A", text: "Volatilità", correct: false },
+              { label: "B", text: "Densità", correct: true },
+              { label: "C", text: "Dimensione dei pori", correct: false },
+              { label: "D", text: "Carica elettrica", correct: false }
+            ],
+            explanation:
+              "Entrambi i metodi separano in base alla diversa densità; cambiano solo le forze coinvolte."
+          },
+          {
+            question: "Perché un elemento è formato da atomi tutti uguali?",
+            answers: [
+              { label: "A", text: "Hanno gli stessi neutroni", correct: false },
+              { label: "B", text: "Formano un composto", correct: false },
+              { label: "C", text: "Condividono lo stesso numero atomico Z", correct: true },
+              { label: "D", text: "Hanno le stesse proprietà fisiche", correct: false }
+            ],
+            explanation:
+              "Il numero di protoni è identico per tutti gli atomi di un elemento, quindi appartengono alla stessa specie."
+          },
+          {
+            question: "Qual è la sola particella che può essere ceduta o acquistata senza cambiare l'identità chimica?",
+            answers: [
+              { label: "A", text: "Protone", correct: false },
+              { label: "B", text: "Elettrone", correct: true },
+              { label: "C", text: "Neutrone", correct: false },
+              { label: "D", text: "Fotone", correct: false }
+            ],
+            explanation:
+              "Variando il numero di elettroni si formano ioni ma il numero atomico rimane invariato."
+          },
+          {
+            question: "CHOMPS indica i sei elementi fondamentali della vita. Quale elemento è centrale?",
+            answers: [
+              { label: "A", text: "Ossigeno", correct: false },
+              { label: "B", text: "Idrogeno", correct: false },
+              { label: "C", text: "Fosforo", correct: false },
+              { label: "D", text: "Carbonio", correct: true }
+            ],
+            explanation:
+              "Il carbonio può formare lunghe catene e strutture complesse, rendendolo la base della chimica organica."
+          },
+          {
+            question: "Cosa succede agli ioni di un sale quando viene sciolto in acqua?",
+            answers: [
+              { label: "A", text: "Scompaiono", correct: false },
+              { label: "B", text: "Formano molecole neutre", correct: false },
+              { label: "C", text: "Restano in forma ionica separata", correct: true },
+              { label: "D", text: "Diventano isotopi", correct: false }
+            ],
+            explanation:
+              "In soluzione gli ioni rimangono carichi e circondati dalle molecole d'acqua."
+          },
+          {
+            question: "Quale caratteristica distingue nettamente metalli e non metalli?",
+            answers: [
+              { label: "A", text: "I metalli sono gassosi", correct: false },
+              { label: "B", text: "Entrambi sono fragili", correct: false },
+              { label: "C", text: "I metalli sono duttili e conduttori; i non metalli opachi e fragili", correct: true },
+              { label: "D", text: "I non metalli sono lucenti", correct: false }
+            ],
+            explanation:
+              "I metalli conducono bene e sono malleabili, mentre i non metalli sono cattivi conduttori e spesso fragili."
+          }
+        ],
+        hard: [
+          {
+            question: "Se una sostanza non è separabile per evaporazione ma lo è per elettrolisi, è:",
+            answers: [
+              { label: "A", text: "Miscuglio omogeneo", correct: false },
+              { label: "B", text: "Elemento", correct: false },
+              { label: "C", text: "Composto chimico", correct: true },
+              { label: "D", text: "Sostanza pura indifferenziata", correct: false }
+            ],
+            explanation:
+              "Non essendo separabile fisicamente ma decomponibile chimicamente, la sostanza è classificata come composto."
+          },
+          {
+            question: "Un atomo neutro con Z=15 e A=31 possiede:",
+            answers: [
+              { label: "A", text: "15 elettroni e 31 protoni", correct: false },
+              { label: "B", text: "16 protoni e 15 elettroni", correct: false },
+              { label: "C", text: "Massa concentrata negli elettroni", correct: false },
+              { label: "D", text: "15 protoni e 16 neutroni", correct: true }
+            ],
+            explanation:
+              "Il numero di neutroni è dato da A - Z = 31 - 15 = 16, mentre la massa è concentrata nel nucleo."
+          },
+          {
+            question: "Perché la decantazione semplice è poco efficiente per particelle molto piccole?",
+            answers: [
+              { label: "A", text: "Richiede temperature elevate", correct: false },
+              { label: "B", text: "Si affida alla lenta forza di gravità", correct: true },
+              { label: "C", text: "Non sfrutta la densità", correct: false },
+              { label: "D", text: "È adatta solo per soluzioni", correct: false }
+            ],
+            explanation:
+              "Particelle minute impiegano tempi lunghi a depositarsi per gravità, motivo per cui si preferisce la centrifugazione."
+          },
+          {
+            question: "Il principio della repulsione degli elettroni e dei legami forti spiega:",
+            answers: [
+              { label: "A", text: "Come separare acqua e sale", correct: false },
+              { label: "B", text: "La differenza tra isotopi", correct: false },
+              { label: "C", text: "Perché la mano non attraversa il tavolo pur senza contatto atomico", correct: true },
+              { label: "D", text: "Come si forma uno ione", correct: false }
+            ],
+            explanation:
+              "Gli elettroni si respingono impedendo il contatto diretto, mentre i legami chimici mantengono la struttura solida."
+          },
+          {
+            question: "Quando un composto ionico si scioglie in acqua, in che forma restano i suoi componenti?",
+            answers: [
+              { label: "A", text: "Atomi neutri", correct: false },
+              { label: "B", text: "Molecole del composto intatte", correct: false },
+              { label: "C", text: "Ioni carichi", correct: true },
+              { label: "D", text: "Protoni e neutroni liberi", correct: false }
+            ],
+            explanation:
+              "I sali in acqua restano sotto forma di cationi e anioni circondati da molecole d'acqua."
+          },
+          {
+            question: "Per la specie 20/40 Ca^{+2}, quanti protoni, neutroni ed elettroni?",
+            answers: [
+              { label: "A", text: "20 protoni, 20 neutroni, 22 elettroni", correct: false },
+              { label: "B", text: "20 protoni, 20 neutroni, 18 elettroni", correct: true },
+              { label: "C", text: "22 protoni, 18 neutroni, 20 elettroni", correct: false },
+              { label: "D", text: "20 protoni, 40 neutroni, 20 elettroni", correct: false }
+            ],
+            explanation:
+              "Z=20 indica 20 protoni; A=40 implica 20 neutroni; la carica +2 significa due elettroni in meno (18)."
+          },
+          {
+            question: "Perché conoscere la dimensione delle particelle è fondamentale prima di una filtrazione?",
+            answers: [
+              { label: "A", text: "Per determinare la volatilità", correct: false },
+              { label: "B", text: "Per calcolare la densità", correct: false },
+              { label: "C", text: "Per scegliere pori abbastanza piccoli da trattenere le particelle", correct: true },
+              { label: "D", text: "La dimensione è irrilevante", correct: false }
+            ],
+            explanation:
+              "Se i pori del filtro sono più grandi delle particelle, queste passeranno e la separazione fallirà."
+          },
+          {
+            question: "Il Carbonio-14 ha le stesse proprietà chimiche del Carbonio-12 perché:",
+            answers: [
+              { label: "A", text: "Ha numero atomico 8", correct: false },
+              { label: "B", text: "I neutroni determinano le proprietà chimiche", correct: false },
+              { label: "C", text: "Il numero atomico e gli elettroni restano invariati", correct: true },
+              { label: "D", text: "È un composto", correct: false }
+            ],
+            explanation:
+              "Gli isotopi condividono protoni ed elettroni, quindi reagiscono allo stesso modo nonostante masse diverse."
+          },
+          {
+            question: "Perché l'idrogeno, pur trovandosi a sinistra della tavola, non è un metallo?",
+            answers: [
+              { label: "A", text: "È un metallo liquido", correct: false },
+              { label: "B", text: "È un semimetallo", correct: false },
+              { label: "C", text: "È un non metallo gassoso che richiede pressione e freddo per liquefarsi", correct: true },
+              { label: "D", text: "Il suo protone lo rende il re della vita", correct: false }
+            ],
+            explanation:
+              "L'idrogeno è un non metallo gassoso ed è un'eccezione rispetto agli elementi metallici della stessa zona."
+          },
+          {
+            question: "Qual è la relazione corretta tra elemento e composto chimico?",
+            answers: [
+              { label: "A", text: "Il composto è la parte più piccola dell'elemento", correct: false },
+              { label: "B", text: "Entrambi sono miscugli", correct: false },
+              { label: "C", text: "Un elemento è indivisibile chimicamente; un composto unisce più elementi", correct: true },
+              { label: "D", text: "Entrambi si separano con metodi fisici", correct: false }
+            ],
+            explanation:
+              "Gli elementi sono sostanze pure semplici, mentre i composti sono combinazioni di elementi separabili solo chimicamente."
+          },
+          {
+            question: "Quando è necessaria la distillazione frazionata rispetto a quella semplice?",
+            answers: [
+              { label: "A", text: "Per separare miscugli eterogenei", correct: false },
+              { label: "B", text: "Quando serve forza centrifuga", correct: false },
+              { label: "C", text: "Quando i punti di ebollizione sono molto vicini (meno di 25 °C)", correct: true },
+              { label: "D", text: "Quando i componenti non sono volatili", correct: false }
+            ],
+            explanation:
+              "La colonna frazionata consente una separazione accurata quando le temperature di ebollizione differiscono di poco."
+          },
+          {
+            question: "Come si concilia lo studio microscopico della chimica con le proprietà macroscopiche degli elementi?",
+            answers: [
+              { label: "A", text: "Il singolo atomo ha le stesse proprietà macroscopiche", correct: false },
+              { label: "B", text: "La tavola descrive solo il livello microscopico", correct: false },
+              { label: "C", text: "Le proprietà macroscopiche emergono dall'insieme di molti atomi, ma la tavola riporta anche quelle chimiche", correct: true },
+              { label: "D", text: "Le proprietà chimiche e fisiche coincidono sempre", correct: false }
+            ],
+            explanation:
+              "La tavola periodica collega il comportamento del singolo atomo con le proprietà macroscopiche quando molti atomi si combinano."
+          },
+          {
+            question: "Se un atomo neutro di Carbonio (Z=6) acquisisce quattro elettroni diventando C⁴⁻, quale affermazione è falsa?",
+            answers: [
+              { label: "A", text: "È diventato un anione", correct: false },
+              { label: "B", text: "Il numero atomico resta 6", correct: false },
+              { label: "C", text: "Ora possiede 10 elettroni", correct: false },
+              { label: "D", text: "È cambiato il numero di massa A", correct: true }
+            ],
+            explanation:
+              "L'acquisto di elettroni modifica la carica ma non il numero di massa, che dipende da protoni e neutroni."
+          },
+          {
+            question: "Quando è necessario impiegare la centrifugazione invece della semplice decantazione?",
+            answers: [
+              { label: "A", text: "Quando il miscuglio è omogeneo", correct: false },
+              { label: "B", text: "Quando i componenti hanno la stessa densità", correct: false },
+              { label: "C", text: "Quando la separazione per sola gravità è troppo lenta", correct: true },
+              { label: "D", text: "Quando i componenti hanno diversi punti di ebollizione", correct: false }
+            ],
+            explanation:
+              "La centrifuga fornisce una forza molto maggiore della gravità, utile quando la decantazione sarebbe inefficiente."
+          },
+          {
+            question: "Qual è il criterio che classifica l'acqua distillata come sostanza pura e l'acqua potabile come miscuglio?",
+            answers: [
+              { label: "A", text: "La possibilità di scomporre l'acqua distillata in H e O", correct: false },
+              { label: "B", text: "L'acqua potabile è un composto", correct: false },
+              { label: "C", text: "Nell'acqua potabile i sali e i gas disciolti si separano con metodi fisici", correct: true },
+              { label: "D", text: "L'evaporazione è irreversibile solo per l'acqua potabile", correct: false }
+            ],
+            explanation:
+              "La domanda chiave è se il sistema è separabile fisicamente: l'acqua potabile sì (è una soluzione), l'acqua distillata no (sostanza pura)."
+          },
+          {
+            question: "Perché la definizione di molecola è centrale per la chimica?",
+            answers: [
+              { label: "A", text: "Un composto può essere fatto da un solo atomo", correct: false },
+              { label: "B", text: "Le proprietà chimiche di un composto dipendono dall'insieme specifico di atomi", correct: true },
+              { label: "C", text: "Tutte le molecole hanno formule identiche", correct: false },
+              { label: "D", text: "La molecola ha lo stesso numero di protoni dell'atomo", correct: false }
+            ],
+            explanation:
+              "La molecola rappresenta il livello in cui emergono le proprietà di un composto, diverse da quelle del singolo elemento."
+          },
+          {
+            question: "Quale fenomeno non richiede il principio di dilatazione o restringimento delle particelle?",
+            answers: [
+              { label: "A", text: "Evaporazione di un liquido", correct: false },
+              { label: "B", text: "Liquefazione di un gas", correct: false },
+              { label: "C", text: "Separazione di olio e acqua in due strati", correct: true },
+              { label: "D", text: "Raffreddamento di un oggetto", correct: false }
+            ],
+            explanation:
+              "La separazione di olio e acqua è dovuta alla diversa densità e non a variazioni di volume con la temperatura."
+          },
+          {
+            question: "Come si distribuisce la massa totale di un atomo rispetto alla sua struttura interna?",
+            answers: [
+              { label: "A", text: "Uniformemente tra elettroni e nucleo", correct: false },
+              { label: "B", text: "L'atomo è pieno e compatto", correct: false },
+              { label: "C", text: "La massa è quasi tutta nel nucleo nonostante l'atomo sia quasi vuoto", correct: true },
+              { label: "D", text: "Dipende solo dal numero atomico", correct: false }
+            ],
+            explanation:
+              "Protoni e neutroni nel nucleo concentrano quasi tutta la massa, mentre gli elettroni occupano regioni quasi vuote."
+          },
+          {
+            question: "Qual è l'unica particella subatomica che, variando, cambia il numero di massa senza alterare l'identità chimica?",
+            answers: [
+              { label: "A", text: "Protone", correct: false },
+              { label: "B", text: "Elettrone", correct: false },
+              { label: "C", text: "Neutrone", correct: true },
+              { label: "D", text: "Ione", correct: false }
+            ],
+            explanation:
+              "Variando il numero di neutroni si ottengono isotopi dello stesso elemento: A cambia, Z resta invariato."
+          },
+          {
+            question: "Perché i sei elementi CHOMPS sono così importanti per la vita?",
+            answers: [
+              { label: "A", text: "Tutti gli elementi della tavola sono necessari", correct: false },
+              { label: "B", text: "CHOMPS sono miscugli omogenei", correct: false },
+              { label: "C", text: "Pochi elementi, guidati dal carbonio, formano l'enorme varietà di molecole viventi", correct: true },
+              { label: "D", text: "Solo gli elementi CHOMPS possono formare ioni", correct: false }
+            ],
+            explanation:
+              "La vita sfrutta principalmente carbonio, idrogeno, ossigeno, azoto, fosforo e zolfo per costruire molecole complesse."
+          },
+        ]
       };
-      shuffle(state.questions);
-      summaryEl.classList.remove('visible');
-      summaryEl.textContent = '';
-      restartBtn.disabled = false;
-      renderQuestion();
-    }
 
-    function shuffle(array) {
-      for (let i = array.length - 1; i > 0; i -= 1) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
+      const difficultyButtons = document.querySelectorAll('.difficulty-buttons button');
+      const quizCard = document.getElementById('quizCard');
+      const scorePanel = document.getElementById('scorePanel');
+      const questionText = document.getElementById('questionText');
+      const optionsList = document.getElementById('options');
+      const feedbackBox = document.getElementById('feedback');
+      const nextButton = document.getElementById('nextButton');
+      const resetButton = document.getElementById('resetButton');
+      const restartButton = document.getElementById('restartButton');
+      const chooseButton = document.getElementById('chooseButton');
+      const questionCounter = document.getElementById('questionCounter');
+      const scoreCounter = document.getElementById('scoreCounter');
+      const finalScore = document.getElementById('finalScore');
+      const finalAccuracy = document.getElementById('finalAccuracy');
+      const finalSummary = document.getElementById('finalSummary');
+
+      const state = {
+        level: null,
+        questions: [],
+        currentIndex: 0,
+        score: 0
+      };
+
+      const shuffle = (array) => {
+        const items = [...array];
+        for (let i = items.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [items[i], items[j]] = [items[j], items[i]];
+        }
+        return items;
+      };
+
+      function resetUI() {
+        quizCard.classList.add('hidden');
+        scorePanel.classList.add('hidden');
+        feedbackBox.classList.remove('visible', 'positive', 'negative');
+        feedbackBox.textContent = '';
+        optionsList.innerHTML = '';
+        nextButton.disabled = true;
       }
-    }
 
-    difficultyButtons.forEach((button) => {
-      button.addEventListener('click', () => {
-        const level = button.dataset.level;
-        resetButtons();
-        button.classList.add('active');
-        loadLevel(level);
-      });
-    });
-
-    nextBtn.addEventListener('click', () => {
-      if (!state.questions.length) return;
-      if (state.currentIndex < state.questions.length - 1) {
-        state.currentIndex += 1;
+      function startQuiz(level) {
+        state.level = level;
+        state.questions = shuffle(questionBank[level]);
+        state.currentIndex = 0;
+        state.score = 0;
+        difficultyButtons.forEach((btn) => btn.classList.toggle('active', btn.dataset.level === level));
+        scorePanel.classList.add('hidden');
+        quizCard.classList.remove('hidden');
         renderQuestion();
       }
-    });
 
-    restartBtn.addEventListener('click', () => {
-      if (!state.level) return;
-      loadLevel(state.level);
-    });
+      function renderQuestion() {
+        const question = state.questions[state.currentIndex];
+        questionText.textContent = question.question;
+        questionCounter.textContent = `Domanda ${state.currentIndex + 1} di ${state.questions.length}`;
+        scoreCounter.textContent = `Punteggio: ${state.score}`;
+        feedbackBox.className = 'feedback';
+        feedbackBox.textContent = '';
+        nextButton.disabled = true;
+        optionsList.innerHTML = '';
 
-    renderQuestion();
-  </script>
-</body>
+        const answers = shuffle(question.answers);
+        answers.forEach((answer) => {
+          const button = document.createElement('button');
+          button.className = 'option';
+          button.innerHTML = `<span>${answer.label}.</span>${answer.text}`;
+          button.type = 'button';
+          button.dataset.label = answer.label;
+          button.addEventListener('click', () => handleAnswer(button, answer.correct, question));
+          optionsList.appendChild(button);
+        });
+      }
+
+      function handleAnswer(selectedButton, isCorrect, question) {
+        const optionButtons = optionsList.querySelectorAll('.option');
+        optionButtons.forEach((btn) => {
+          btn.disabled = true;
+          const answerLabel = btn.dataset.label;
+          const answerData = question.answers.find((a) => a.label === answerLabel);
+          if (answerData?.correct) {
+            btn.classList.add('correct');
+          }
+        });
+
+        if (isCorrect) {
+          state.score += 1;
+          selectedButton.classList.add('correct');
+          feedbackBox.textContent = `Corretto! ${question.explanation}`;
+          feedbackBox.classList.add('visible', 'positive');
+        } else {
+          selectedButton.classList.add('wrong');
+          feedbackBox.textContent = `Risposta errata. ${question.explanation}`;
+          feedbackBox.classList.add('visible', 'negative');
+        }
+
+        nextButton.disabled = false;
+        nextButton.textContent = state.currentIndex < state.questions.length - 1 ? 'Domanda successiva' : 'Mostra risultati';
+        scoreCounter.textContent = `Punteggio: ${state.score}`;
+      }
+
+      function showResults() {
+        quizCard.classList.add('hidden');
+        scorePanel.classList.remove('hidden');
+        const total = state.questions.length;
+        const percent = Math.round((state.score / total) * 100);
+        finalScore.textContent = `Hai risposto correttamente a ${state.score} su ${total} domande.`;
+        finalAccuracy.textContent = `Accuratezza: ${percent}%`;
+        finalSummary.textContent = percent >= 80
+          ? 'Ottimo lavoro! Continua così.'
+          : percent >= 60
+          ? 'Buon risultato, ma puoi ancora migliorare rivedendo le spiegazioni.'
+          : 'Ti consigliamo di ripassare le spiegazioni e riprovare per consolidare le basi.';
+      }
+
+      nextButton.addEventListener('click', () => {
+        if (state.currentIndex < state.questions.length - 1) {
+          state.currentIndex += 1;
+          renderQuestion();
+        } else {
+          showResults();
+        }
+      });
+
+      resetButton.addEventListener('click', () => {
+        resetUI();
+        difficultyButtons.forEach((btn) => btn.classList.remove('active'));
+      });
+
+      restartButton.addEventListener('click', () => {
+        if (state.level) {
+          startQuiz(state.level);
+        }
+      });
+
+      chooseButton.addEventListener('click', () => {
+        resetUI();
+        difficultyButtons.forEach((btn) => btn.classList.remove('active'));
+      });
+
+      difficultyButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+          const level = button.dataset.level;
+          startQuiz(level);
+        });
+      });
+    </script>
+  </body>
 </html>
