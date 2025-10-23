@@ -250,7 +250,8 @@
     <section>
       <h2>Seleziona la difficoltà</h2>
       <div class="difficulty-selector" role="group" aria-label="Seleziona livello di difficoltà">
-        <button type="button" data-level="facile">Livello Super Facile / Concreto</button>
+        <button type="button" data-level="super_facile">Livello Super Facile / Concreto</button>
+        <button type="button" data-level="facile">Livello Facile</button>
         <button type="button" data-level="medio">Livello Medio</button>
         <button type="button" data-level="difficile">Livello Difficile</button>
       </div>
@@ -274,7 +275,7 @@
 
   <script>
     const quizData = {
-      facile: [
+      super_facile: [
         {
           question: "Che cos'è la Materia?",
           choices: [
@@ -477,6 +478,237 @@
           correct: 1,
           explanation:
             "In soluzione, i sali sono presenti come ioni caricati positivamente (cationi) e negativamente (anioni)."
+        }
+      ],
+      facile: [
+        {
+          question:
+            "Qual è il criterio fondamentale per distinguere un Miscuglio da una Sostanza Pura?",
+          choices: [
+            "Se può essere scomposta mediante reazioni chimiche.",
+            "Se possiede massa e occupa un volume.",
+            "Se può essere scomposta mediante metodi fisici.",
+            "Se i suoi componenti sono visibilmente distinguibili."
+          ],
+          correct: 2,
+          explanation:
+            "Se la materia può essere scomposta con metodi fisici stiamo osservando un miscuglio; le sostanze pure non lo permettono."
+        },
+        {
+          question:
+            "Cosa rappresenta il Numero Atomico (Z) di un elemento chimico nella Tavola Periodica?",
+          choices: [
+            "Il numero di elettroni, che può variare.",
+            "Il numero di neutroni, che può variare.",
+            "Il numero di protoni.",
+            "La somma di protoni ed elettroni."
+          ],
+          correct: 2,
+          explanation:
+            "Il numero atomico Z indica il numero di protoni nel nucleo, l'unico dato che non cambia per uno stesso elemento."
+        },
+        {
+          question: "Un Miscuglio Omogeneo è caratterizzato da:",
+          choices: [
+            "Componenti visibilmente separati.",
+            "La possibilità di essere scomposto solo con reazioni chimiche.",
+            "L'essere formato da un solo tipo di atomi.",
+            "L'apparire come un'unica fase in cui i componenti non sono distinguibili."
+          ],
+          correct: 3,
+          explanation:
+            "Le soluzioni appaiono uniformi perché i componenti non sono più distinguibili a occhio nudo."
+        },
+        {
+          question:
+            "La Filtrazione, come metodo di separazione fisica, sfrutta principalmente la differenza di quale proprietà?",
+          choices: [
+            "Volatilità.",
+            "Densità.",
+            "Dimensione delle particelle.",
+            "Carica elettrica."
+          ],
+          correct: 2,
+          explanation:
+            "Filtrare significa trattenere le particelle più grandi rispetto ai pori del filtro, sfruttando quindi la loro dimensione."
+        },
+        {
+          question: "La Molecola è definita come:",
+          choices: [
+            "La più piccola parte di un elemento.",
+            "L'insieme degli isotopi di un elemento.",
+            "La più piccola parte di un composto che ne conserva tutte le proprietà chimiche.",
+            "La combinazione di un catione e un anione."
+          ],
+          correct: 2,
+          explanation:
+            "La molecola è l'unità minima di un composto capace di mantenerne le caratteristiche chimiche."
+        },
+        {
+          question:
+            "Quale metodo di separazione viene paragonato a una decantazione accelerata perché usa la forza centrifuga?",
+          choices: ["Decantazione.", "Distillazione.", "Centrifugazione.", "Filtrazione."],
+          correct: 2,
+          explanation:
+            "La centrifugazione sostituisce la gravità con la forza centrifuga per stratificare rapidamente i componenti."
+        },
+        {
+          question:
+            "In un atomo neutro il numero di elettroni è sempre uguale al numero di:",
+          choices: ["Neutroni.", "Numero di Massa (A).", "Protoni.", "Isotopi."],
+          correct: 2,
+          explanation:
+            "Per mantenere la neutralità elettrica gli elettroni devono eguagliare i protoni presenti nel nucleo."
+        },
+        {
+          question:
+            "Quale proprietà fisica sfruttano distillazione semplice e frazionata per separare una soluzione?",
+          choices: [
+            "La differenza di dimensione delle particelle.",
+            "La differenza di densità.",
+            "La diversa volatilità o i diversi punti di ebollizione.",
+            "La forza di gravità."
+          ],
+          correct: 2,
+          explanation:
+            "Entrambi i metodi sfruttano la diversa volatilità delle sostanze, ossia i loro differenti punti di ebollizione."
+        },
+        {
+          question:
+            "Nella Tavola Periodica come sono classificati gli elementi a sinistra della diagonale, ottimi conduttori di calore ed elettricità?",
+          choices: ["Non metalli.", "Semimetalli.", "Metalli.", "Gas nobili."],
+          correct: 2,
+          explanation:
+            "I metalli occupano la zona sinistra e sono lucenti, duttili e ottimi conduttori."
+        },
+        {
+          question: "Uno ione con carica negativa (Anione) possiede:",
+          choices: [
+            "Un protone in più.",
+            "Un protone in meno.",
+            "Elettroni in più.",
+            "Elettroni in meno."
+          ],
+          correct: 2,
+          explanation:
+            "L'acquisto di elettroni (cariche negative) rende la specie complessivamente negativa, cioè un anione."
+        },
+        {
+          question: "Cosa succede normalmente quando si riscalda una sostanza?",
+          choices: [
+            "Le particelle si avvicinano (restringimento).",
+            "Nulla, la materia resta invariata.",
+            "Le particelle si allontanano (dilatazione).",
+            "Avviene solo la condensazione."
+          ],
+          correct: 2,
+          explanation:
+            "Il calore fornisce energia e favorisce la dilatazione, aumentando le distanze tra le particelle."
+        },
+        {
+          question:
+            "Gli isotopi di un elemento si differenziano perché hanno un diverso numero di:",
+          choices: ["Protoni.", "Neutroni.", "Elettroni.", "Molecole."],
+          correct: 1,
+          explanation:
+            "Variando i neutroni cambia il numero di massa ma resta invariato il numero atomico, ottenendo così isotopi."
+        },
+        {
+          question: "Qual è la definizione ufficiale di Materia?",
+          choices: [
+            "Tutto ciò che è visibile.",
+            "Tutto ciò che è composto da atomi.",
+            "Tutto ciò che si trasforma con reazioni chimiche.",
+            "Tutto ciò che ha massa e occupa un volume."
+          ],
+          correct: 3,
+          explanation:
+            "Per materia si intende qualsiasi cosa dotata di massa e capace di occupare spazio."
+        },
+        {
+          question:
+            "Se una Sostanza Pura può essere scomposta solo mediante reazioni chimiche, come viene classificata?",
+          choices: ["Miscuglio.", "Elemento.", "Composto chimico.", "Soluzione."],
+          correct: 2,
+          explanation:
+            "I composti chimici sono sostanze pure che si possono scindere in elementi solo con trasformazioni chimiche."
+        },
+        {
+          question: "Il Numero di Massa (A) di un atomo è dato dalla somma di:",
+          choices: [
+            "Elettroni e neutroni.",
+            "Elettroni e protoni.",
+            "Protoni ed elettroni (se neutro).",
+            "Protoni e neutroni."
+          ],
+          correct: 3,
+          explanation:
+            "A rappresenta la somma delle particelle pesanti del nucleo: protoni più neutroni."
+        },
+        {
+          question:
+            "A quale livello la chimica studia soprattutto la materia?",
+          choices: [
+            "Macroscopia (livello visibile).",
+            "Microscopico o ultramicroscopico.",
+            "Livello elementare.",
+            "Livello esclusivamente ionico."
+          ],
+          correct: 1,
+          explanation:
+            "La chimica penetra nel livello microscopico e ultramicroscopico per capire struttura e comportamento della materia."
+        },
+        {
+          question:
+            "La Decantazione combina quale proprietà fisica con l'azione di quale forza?",
+          choices: [
+            "Volatilità e calore.",
+            "Dimensione delle particelle e filtrazione.",
+            "Diversa densità e forza di gravità.",
+            "Forza centrifuga e dimensione."
+          ],
+          correct: 2,
+          explanation:
+            "La decantazione lascia agire la gravità perché le particelle con densità maggiore scendano sul fondo."
+        },
+        {
+          question:
+            "Un Catione è uno ione positivo ($Na^+$). Come si forma dall'atomo neutro?",
+          choices: [
+            "Acquista protoni.",
+            "Perde elettroni.",
+            "Perde neutroni.",
+            "Acquista cariche neutre."
+          ],
+          correct: 1,
+          explanation:
+            "Per diventare positivo l'atomo deve perdere elettroni, cioè cariche negative."
+        },
+        {
+          question:
+            "Qual è una caratteristica distintiva dei non metalli solidi rispetto ai metalli?",
+          choices: [
+            "Sono lucenti.",
+            "Sono ottimi conduttori di elettricità.",
+            "Sono duttili e malleabili.",
+            "Sono opachi e fragili (si rompono facilmente)."
+          ],
+          correct: 3,
+          explanation:
+            "I non metalli appaiono opachi e fragili, a differenza dei metalli che sono duttili e conduttori."
+        },
+        {
+          question:
+            "Nello stato aeriforme come si comportano le particelle della materia?",
+          choices: [
+            "Sono vicinissime con legami fortissimi.",
+            "Sono un po' più lontane ma legate debolmente come nei liquidi.",
+            "Sono così distanti da non interagire praticamente tra loro.",
+            "Si avvicinano restringendosi se riscaldate."
+          ],
+          correct: 2,
+          explanation:
+            "Nel gas le particelle sono molto lontane e libere, con interazioni trascurabili salvo urti occasionali."
         }
       ],
       medio: [
